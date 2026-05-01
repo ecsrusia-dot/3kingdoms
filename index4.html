@@ -1,0 +1,273 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<title>삼국지: 천기의 기록</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<style>
+.log-keyword { color: #FBBF24; font-weight: bold; cursor: pointer; text-decoration: underline; }
+.grade-UR { color: #f43f5e; text-shadow: 0 0 5px rgba(244,63,94,0.5); }
+.grade-SSR { color: #fbbf24; text-shadow: 0 0 4px rgba(251,191,36,0.4); }
+.grade-SR { color: #c084fc; }
+.grade-R { color: #60a5fa; }
+.grade-N { color: #9ca3af; }
+.slot-box { transition: all 0.2s; }
+.slot-box:active { transform: scale(0.95); }
+::-webkit-scrollbar { width: 4px; }
+::-webkit-scrollbar-thumb { background: #475569; border-radius: 4px; }
+</style>
+</head>
+<body class="bg-slate-900 text-slate-300 font-sans select-none overflow-hidden fixed inset-0 flex flex-col">
+
+<header class="bg-slate-800 p-3 flex justify-between items-center border-b border-slate-700 shrink-0 shadow-md z-10">
+<div class="text-base font-bold text-white tracking-widest">📜 천기의 기록</div>
+<div class="flex gap-3 text-xs font-semibold">
+<span class="text-blue-300">💠 <span id="ui-skystone">0</span></span>
+<span class="text-green-300">📜 <span id="ui-manual">0</span></span>
+<span class="text-purple-400">🕯️ <span id="ui-legacy">0</span></span>
+</div>
+</header>
+
+<main id="main-content" class="flex-1 overflow-y-auto p-4 relative w-full">
+<div class="flex flex-col items-center justify-center h-full text-center">
+<div class="text-4xl mb-4 animate-bounce">🚀</div>
+<div class="text-amber-400 font-bold mb-2">게임 엔진 대기 중...</div>
+<div class="text-slate-400 text-xs mb-6 px-4 leading-relaxed">
+현재 실행하신 앱 환경에서 자동 시작이 차단되었습니다.<br>아래 버튼을 눌러 시스템을 강제 가동하세요.
+</div>
+<button onclick="startGameEngine()" class="px-6 py-3 bg-blue-600 hover:bg-blue-500 text-white font-bold rounded-lg shadow-lg active:scale-95 transition-transform">
+게임 시작하기 (터치)
+</button>
+</div>
+</main>
+
+<footer class="bg-slate-800 flex justify-around p-2 border-t border-slate-700 shrink-0 text-sm pb-safe z-10 shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.1)]">
+<button onclick="switchTab('barracks')" id="tab-barracks" class="w-1/4 py-3 rounded hover:bg-slate-700 font-bold transition-colors">⛺ 막사</button>
+<button onclick="switchTab('battle')" id="tab-battle" class="w-1/4 py-3 rounded hover:bg-slate-700 font-bold text-yellow-400 transition-colors">⚔️ 출정</button>
+<button onclick="switchTab('gacha')" id="tab-gacha" class="w-1/4 py-3 rounded hover:bg-slate-700 font-bold text-blue-400 transition-colors">🏮 등용</button>
+<button onclick="switchTab('legacy')" id="tab-legacy" class="w-1/4 py-3 rounded hover:bg-slate-700 font-bold text-purple-400 transition-colors">🏛️ 가문</button>
+</footer>
+
+<div id="modal-gacha" class="hidden fixed inset-0 z-50 bg-black/90 flex flex-col items-center justify-center p-4 backdrop-blur-sm">
+<div class="text-center w-full max-w-sm">
+<h2 class="text-2xl font-bold text-amber-400 mb-4 border-b border-slate-600 pb-2">등용 결과</h2>
+<div id="gacha-result-list" class="grid grid-cols-2 gap-2 max-h-[60vh] overflow-y-auto custom-scrollbar pr-1 pb-4"></div>
+<button onclick="closeModal('modal-gacha')" class="mt-4 w-full py-3 bg-slate-700 text-white font-bold rounded-lg active:bg-slate-600 shadow-lg">확인 완료</button>
+</div>
+</div>
+
+<script>
+var state = {
+activeTab: 'gacha',
+player: {
+resources: { skyStones: 5000, tacticsManuals: 0, legacyPoints: 0 },
+roster: [],
+party: [null, null, null, null, null]
+}
+};
+
+var HERO_DB = [
+{ id: 'H001', name: '유비', grade: 'UR', role: '군주', stat: '지력/통솔' },
+{ id: 'H002', name: '관우', grade: 'UR', role: '맹장', stat: '무력' },
+{ id: 'H003', name: '조조', grade: 'UR', role: '군주', stat: '지력' },
+{ id: 'H004', name: '여포', grade: 'UR', role: '맹장', stat: '무력' },
+{ id: 'H005', name: '조운', grade: 'SSR', role: '맹장', stat: '무력/민첩' },
+{ id: 'H006', name: '하후돈', grade: 'SSR', role: '호위', stat: '통솔' },
+{ id: 'H007', name: '제갈량', grade: 'SSR', role: '모사', stat: '지력' },
+{ id: 'H008', name: '위연', grade: 'SR', role: '맹장', stat: '무력' },
+{ id: 'H009', name: '장합', grade: 'SR', role: '맹장', stat: '무력' },
+{ id: 'H010', name: '엄안', grade: 'R', role: '호위', stat: '통솔' },
+{ id: 'H011', name: '황개', grade: 'R', role: '호위', stat: '통솔' },
+{ id: 'H012', name: '황건적', grade: 'N', role: '맹장', stat: '무력' },
+{ id: 'H013', name: '민병대', grade: 'N', role: '호위', stat: '통솔' }
+ ];
+
+/* 엔진 시동 함수 (버튼 클릭 시 또는 로드 시 호출) */
+function startGameEngine() {
+try {
+updateUI();
+switchTab('gacha');
+} catch(e) {
+document.getElementById('main-content').innerHTML = '<div style="color:#ef4444; padding:20px;">엔진 시동 오류: ' + e.message + '</div>';
+}
+}
+
+function updateUI() {
+document.getElementById('ui-skystone').innerText = state.player.resources.skyStones.toLocaleString();
+document.getElementById('ui-manual').innerText = state.player.resources.tacticsManuals.toLocaleString();
+document.getElementById('ui-legacy').innerText = state.player.resources.legacyPoints.toLocaleString();
+}
+
+function switchTab(tab) {
+state.activeTab = tab;
+
+var tabs = ['barracks', 'battle', 'gacha', 'legacy'];
+for(var i=0; i<tabs.length; i++) {
+var btn = document.getElementById('tab-' + tabs[i]);
+if(btn) btn.classList.remove('bg-slate-700');
+}
+var activeBtn = document.getElementById('tab-' + tab);
+if(activeBtn) activeBtn.classList.add('bg-slate-700');
+
+var main = document.getElementById('main-content');
+if(!main) return;
+
+if(tab === 'gacha') renderGacha(main);
+else if(tab === 'barracks') renderBarracks(main);
+else main.innerHTML = '<div class="flex items-center justify-center h-full text-slate-500 text-sm">해당 컨텐츠는 다음 단계에서 구현됩니다.</div>';
+}
+
+/* 1. 등용문 (가챠) */
+function renderGacha(container) {
+container.innerHTML = &lt;div class="text-center mb-6 mt-4"&gt; &lt;h2 class="text-2xl font-bold text-blue-400 mb-2 drop-shadow-md"&gt;🏮 천기 등용문&lt;/h2&gt; &lt;p class="text-xs text-slate-400"&gt;천운석을 소모하여 시대의 영웅을 소환합니다.&lt;/p&gt; &lt;p class="text-[10px] text-red-300 mt-1 font-bold"&gt;확률: UR 0.05% / SSR 1.0% / SR 10%&lt;/p&gt; &lt;/div&gt; &lt;div class="flex flex-col gap-4 max-w-xs mx-auto mt-10"&gt; &lt;button onclick="doGacha(1)" class="w-full py-4 bg-slate-800 border border-blue-500/50 rounded-xl font-bold text-white shadow-[0_0_15px_rgba(59,130,246,0.15)] active:scale-95 transition-transform"&gt; 1회 소환 &lt;span class="text-sky-300 text-xs ml-2"&gt;💠 100&lt;/span&gt; &lt;/button&gt; &lt;button onclick="doGacha(10)" class="w-full py-4 bg-slate-800 border border-amber-500/50 rounded-xl font-bold text-white shadow-[0_0_15px_rgba(245,158,11,0.2)] active:scale-95 transition-transform"&gt; 10회 소환 &lt;span class="text-amber-300 text-xs ml-2"&gt;💠 1,000&lt;/span&gt; &lt;/button&gt; &lt;/div&gt;;
+}
+
+function doGacha(times) {
+var cost = times * 100;
+if(state.player.resources.skyStones < cost) {
+alert("천운석이 부족합니다!"); return;
+}
+state.player.resources.skyStones -= cost;
+
+var results = [];
+for(var i=0; i<times; i++) {
+var roll = Math.random() * 100;
+var targetGrade = 'N';
+if(roll < 0.05) targetGrade = 'UR';
+else if(roll < 1.05) targetGrade = 'SSR';
+else if(roll < 11.05) targetGrade = 'SR';
+else if(roll < 51.05) targetGrade = 'R';
+
+var pool = HERO_DB.filter(function(h) { return h.grade === targetGrade; });
+if(pool.length === 0) pool = HERO_DB.filter(function(h) { return h.grade === 'N'; });
+var hero = pool[Math.floor(Math.random() * pool.length)];
+
+var existing = state.player.roster.find(function(r) { return r.id === hero.id; });
+if(existing) {
+existing.count += 1;
+results.push(Object.assign({}, hero, {isDup: true}));
+} else {
+state.player.roster.push({ id: hero.id, count: 1 });
+results.push(Object.assign({}, hero, {isDup: false}));
+}
+}
+updateUI();
+showGachaResult(results);
+}
+
+function showGachaResult(results) {
+var html = '';
+for(var i=0; i<results.length; i++) {
+var r = results[i];
+var borderCls = r.grade === 'UR' ? 'border-red-500 bg-red-900/20' : (r.grade === 'SSR' ? 'border-amber-400 bg-amber-900/20' : 'border-slate-600 bg-slate-800');
+var opacityCls = r.isDup ? 'opacity-80' : '';
+var dupBadge = r.isDup ? '<div class="text-[9px] text-amber-400 font-bold mt-1">✨ 돌파 조각</div>' : '<div class="text-[10px] text-green-400 font-bold mt-1 tracking-wider">NEW!</div>';
+
+html += '<div class="' + borderCls + ' ' + opacityCls + ' border rounded-lg p-3 text-center flex flex-col items-center justify-center min-h-[100px] shadow-md">' +
+'<div class="text-[10px] bg-slate-900 px-2 rounded mb-1 text-slate-300 border border-slate-700">' + r.grade + '</div>' +
+'<div class="font-bold text-sm grade-' + r.grade + ' mb-1">' + r.name + '</div>' +
+dupBadge +
+'</div>';
+}
+document.getElementById('gacha-result-list').innerHTML = html;
+document.getElementById('modal-gacha').classList.remove('hidden');
+}
+
+function closeModal(id) {
+document.getElementById(id).classList.add('hidden');
+}
+
+/* 2. 막사 (진형) */
+function renderBarracks(container) {
+var p = state.player.party;
+
+function renderSlot(index, label) {
+var charId = p[index];
+if(charId) {
+var hero = HERO_DB.find(function(h) { return h.id === charId; });
+return '<div onclick="removeFromParty(' + index + ')" class="slot-box bg-slate-800 border border-sky-500 rounded-lg p-2 text-center cursor-pointer relative shadow-[0_0_10px_rgba(14,165,233,0.3)] h-20 flex flex-col justify-center">' +
+'<span class="absolute top-1 left-1 text-[8px] text-slate-400">' + label + '</span>' +
+'<div class="font-bold text-xs grade-' + hero.grade + '">' + hero.name + '</div>' +
+'<div class="text-[9px] text-slate-400 mt-1">' + hero.role + '</div>' +
+'<div class="absolute -top-2 -right-2 bg-red-900 text-white rounded-full w-4 h-4 text-[10px] flex items-center justify-center border border-red-500 shadow">X</div>' +
+'</div>';
+} else {
+return '<div class="bg-slate-900 border border-slate-700 border-dashed rounded-lg p-2 text-center h-20 flex flex-col items-center justify-center opacity-60">' +
+'<span class="text-[10px] text-slate-500 mb-1">' + label + '</span>' +
+'<span class="text-xs text-slate-600 font-bold">비어있음</span>' +
+'</div>';
+}
+}
+
+var html = '<div class="text-center mb-4">' +
+'<h2 class="text-xl font-bold text-amber-400 mb-1 drop-shadow">전술 진형 편성</h2>' +
+'<p class="text-[10px] text-slate-400">전열은 대신 타격받고, 후열은 보호받습니다.</p>' +
+'</div>' +
+'<div class="bg-slate-900/50 p-4 rounded-xl border border-slate-700 mb-6 shadow-inner">' +
+'<div class="flex gap-2 justify-center mb-3 w-4/5 mx-auto">' +
+renderSlot(0, '전열(1)') + renderSlot(1, '전열(2)') +
+'</div>' +
+'<div class="grid grid-cols-3 gap-2">' +
+renderSlot(2, '후열(1)') + renderSlot(3, '후열(2)') + renderSlot(4, '후열(3)') +
+'</div></div>' +
+'<div class="text-xs font-bold text-slate-300 mb-2 border-b border-slate-700 pb-1">보유 무장 <span class="text-[9px] font-normal text-slate-500 ml-1">(터치하여 자동 배치)</span></div>' +
+'<div class="space-y-2 pb-10">';
+
+if(state.player.roster.length === 0) {
+html += '<div class="text-center text-slate-500 py-6 text-[11px] bg-slate-800/50 rounded-lg border border-slate-700 border-dashed">보유한 무장이 없습니다. 등용문에서 소환해주세요.</div>';
+} else {
+var myHeroes = state.player.roster.map(function(r) {
+var data = HERO_DB.find(function(h) { return h.id === r.id; });
+return Object.assign({}, data, {count: r.count});
+});
+var order = {'UR':5, 'SSR':4, 'SR':3, 'R':2, 'N':1};
+myHeroes.sort(function(a,b) { return (order[b.grade]||0) - (order[a.grade]||0); });
+
+for(var i=0; i<myHeroes.length; i++) {
+var h = myHeroes[i];
+var inParty = state.player.party.indexOf(h.id) !== -1;
+var btnClass = inParty ? 'bg-slate-700 opacity-50' : 'bg-slate-800 active:bg-slate-700 cursor-pointer border-slate-600 shadow-sm';
+var clickEvent = inParty ? '' : "addToParty('" + h.id + "')";
+var dupTxt = h.count > 1 ? '<span class="text-[9px] text-amber-400 font-bold ml-1">+' + (h.count-1) + ' 돌파</span>' : '';
+var statusBadge = inParty ? '<div class="text-[10px] font-bold text-slate-500">출전중</div>' : '<div class="text-[10px] font-bold text-amber-400 bg-amber-900/30 px-3 py-1.5 rounded border border-amber-700/50">배치</div>';
+
+html += '<div onclick="' + clickEvent + '" class="' + btnClass + ' border rounded-lg p-3 flex justify-between items-center transition-colors">' +
+'<div>' +
+'<div class="flex items-center gap-2 mb-1">' +
+'<span class="text-[9px] border border-slate-600 px-1 rounded bg-slate-900">' + h.grade + '</span>' +
+'<span class="font-bold text-sm grade-' + h.grade + '">' + h.name + '</span>' + dupTxt +
+'</div>' +
+'<div class="text-[10px] text-slate-400">포지션: ' + h.role + ' | 스탯: ' + h.stat + '</div>' +
+'</div>' + statusBadge + '</div>';
+}
+}
+html += '</div>';
+container.innerHTML = html;
+}
+
+function addToParty(heroId) {
+var emptyIdx = state.player.party.indexOf(null);
+if(emptyIdx === -1) {
+alert("진형이 꽉 찼습니다! 위쪽 편성창에서 X를 눌러 해제해주세요."); return;
+}
+state.player.party[emptyIdx] = heroId;
+renderBarracks(document.getElementById('main-content'));
+}
+
+function removeFromParty(index) {
+state.player.party[index] = null;
+renderBarracks(document.getElementById('main-content'));
+}
+
+/* 파일이 로드되면 자동으로 실행 시도, 안 되면 유저가 화면 버튼을 누르게 됨 /
+window.onload = function() {
+/ 브라우저가 자동 실행을 허용할 경우 바로 넘김 */
+var main = document.getElementById('main-content');
+if(main && main.innerHTML.indexOf('🚀') !== -1) {
+startGameEngine();
+}
+};
+</script>
+</body>
+</html>
