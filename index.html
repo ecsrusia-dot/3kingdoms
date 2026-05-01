@@ -1,417 +1,479 @@
 <!DOCTYPE html>
 <html lang="ko">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>삼국지: 천기의 기록</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <style>
-        .grade-UR { color: #f43f5e; text-shadow: 0 0 8px rgba(244,63,94,0.7); font-weight: 900; }
-        .grade-SSR { color: #fbbf24; text-shadow: 0 0 6px rgba(251,191,36,0.6); }
-        .grade-SR { color: #c084fc; font-weight: bold; }
-        .grade-R { color: #60a5fa; }
-        .grade-N { color: #9ca3af; }
-        
-        /* 속성 스타일 (천, 지, 인) */
-        .attr-天 { color: #38bdf8; text-shadow: 0 0 5px #0ea5e9; font-weight: 900; }
-        .attr-地 { color: #34d399; text-shadow: 0 0 5px #10b981; font-weight: 900; }
-        .attr-人 { color: #fb7185; text-shadow: 0 0 5px #f43f5e; font-weight: 900; }
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<title>삼국지: 천기의 기록</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<style>
+.grade-UR { color: #f43f5e; text-shadow: 0 0 8px rgba(244,63,94,0.7); font-weight: 900; }
+.grade-SSR { color: #fbbf24; text-shadow: 0 0 6px rgba(251,191,36,0.6); }
+.grade-SR { color: #c084fc; font-weight: bold; }
+.grade-R { color: #60a5fa; }
+.grade-N { color: #9ca3af; }
 
-        .hp-bar { transition: width 0.3s ease-out; }
-        ::-webkit-scrollbar { width: 4px; }
-        ::-webkit-scrollbar-thumb { background: #475569; border-radius: 4px; }
+/* 속성 스타일 (천, 지, 인) */
+.attr-天 { color: #38bdf8; text-shadow: 0 0 5px #0ea5e9; font-weight: 900; }
+.attr-地 { color: #34d399; text-shadow: 0 0 5px #10b981; font-weight: 900; }
+.attr-人 { color: #fb7185; text-shadow: 0 0 5px #f43f5e; font-weight: 900; }
 
-        /* 등용문 이펙트 애니메이션 */
-        @keyframes earthquake {
-            0%, 100% { transform: translate(0, 0) rotate(0deg); }
-            20% { transform: translate(-5px, 5px) rotate(-2deg); }
-            40% { transform: translate(5px, -5px) rotate(2deg); }
-            60% { transform: translate(-5px, -5px) rotate(-1deg); }
-            80% { transform: translate(5px, 5px) rotate(1deg); }
-        }
-        @keyframes flashRed {
-            0% { box-shadow: inset 0 0 50px #9f1239; background-color: rgba(0,0,0,0.9); }
-            100% { box-shadow: inset 0 0 200px #f43f5e; background-color: rgba(159,18,57,0.3); }
-        }
-        @keyframes flashGold {
-            0% { box-shadow: inset 0 0 30px #b45309; background-color: rgba(0,0,0,0.9); }
-            100% { box-shadow: inset 0 0 150px #fbbf24; background-color: rgba(180,83,9,0.3); }
-        }
-        .fx-ur { animation: earthquake 0.15s infinite, flashRed 0.3s alternate infinite; }
-        .fx-ssr { animation: flashGold 0.5s alternate infinite; }
-    </style>
+.hp-bar { transition: width 0.3s ease-out; }
+::-webkit-scrollbar { width: 4px; }
+::-webkit-scrollbar-thumb { background: #475569; border-radius: 4px; }
+
+/* 등용문 이펙트 애니메이션 */
+@keyframes earthquake {
+0%, 100% { transform: translate(0, 0) rotate(0deg); }
+20% { transform: translate(-5px, 5px) rotate(-2deg); }
+40% { transform: translate(5px, -5px) rotate(2deg); }
+60% { transform: translate(-5px, -5px) rotate(-1deg); }
+80% { transform: translate(5px, 5px) rotate(1deg); }
+}
+@keyframes flashRed {
+0% { box-shadow: inset 0 0 50px #9f1239; background-color: rgba(0,0,0,0.9); }
+100% { box-shadow: inset 0 0 200px #f43f5e; background-color: rgba(159,18,57,0.3); }
+}
+@keyframes flashGold {
+0% { box-shadow: inset 0 0 30px #b45309; background-color: rgba(0,0,0,0.9); }
+100% { box-shadow: inset 0 0 150px #fbbf24; background-color: rgba(180,83,9,0.3); }
+}
+.fx-ur { animation: earthquake 0.15s infinite, flashRed 0.3s alternate infinite; }
+.fx-ssr { animation: flashGold 0.5s alternate infinite; }
+</style>
 </head>
 <body class="bg-slate-900 text-slate-300 font-sans select-none overflow-hidden fixed inset-0 flex flex-col">
 
-    <header class="bg-slate-800 p-3 flex justify-between items-center border-b border-slate-700 shrink-0 z-10 shadow-md">
-        <div class="text-base font-bold text-white tracking-widest">📜 천기의 기록</div>
-        <div class="flex gap-3 text-xs font-semibold">
-            <span class="text-blue-300">💠 <span id="ui-skystone">0</span></span>
-            <span class="text-green-300">📜 <span id="ui-manual">0</span></span>
-            <span class="text-purple-400">🕯️ <span id="ui-legacy">0</span></span>
-        </div>
-    </header>
+<header class="bg-slate-800 p-3 flex justify-between items-center border-b border-slate-700 shrink-0 z-10 shadow-md">
+<div class="text-base font-bold text-white tracking-widest">📜 천기의 기록</div>
+<div class="flex gap-3 text-xs font-semibold">
+<span class="text-blue-300">💠 <span id="ui-skystone">0</span></span>
+<span class="text-green-300">📜 <span id="ui-manual">0</span></span>
+<span class="text-purple-400">🕯️ <span id="ui-legacy">0</span></span>
+</div>
+</header>
 
-    <main id="main-content" class="flex-1 overflow-y-auto relative w-full flex flex-col"></main>
+<main id="main-content" class="flex-1 overflow-y-auto relative w-full flex flex-col"></main>
 
-    <footer class="bg-slate-800 flex justify-around p-2 border-t border-slate-700 shrink-0 text-sm pb-safe z-10 shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.1)]">
-        <button onclick="switchTab('barracks')" id="tab-barracks" class="w-1/4 py-3 rounded hover:bg-slate-700 font-bold transition-colors">⛺ 막사</button>
-        <button onclick="switchTab('battle')" id="tab-battle" class="w-1/4 py-3 rounded hover:bg-slate-700 font-bold text-yellow-400 transition-colors">⚔️ 출정</button>
-        <button onclick="switchTab('gacha')" id="tab-gacha" class="w-1/4 py-3 rounded hover:bg-slate-700 font-bold text-blue-400 transition-colors">🏮 등용</button>
-        <button onclick="switchTab('legacy')" id="tab-legacy" class="w-1/4 py-3 rounded hover:bg-slate-700 font-bold text-purple-400 transition-colors">🏛️ 가문</button>
-    </footer>
+<footer class="bg-slate-800 flex justify-around p-2 border-t border-slate-700 shrink-0 text-[11px] font-bold pb-safe z-10 shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.1)]">
+<button onclick="switchTab('barracks')" id="tab-barracks" class="flex-1 py-3 text-center rounded hover:bg-slate-700 transition-colors">⛺ 막사</button>
+<button onclick="switchTab('battle')" id="tab-battle" class="flex-1 py-3 text-center rounded hover:bg-slate-700 text-yellow-400 transition-colors">⚔️ 출정</button>
+<button onclick="switchTab('gacha')" id="tab-gacha" class="flex-1 py-3 text-center rounded hover:bg-slate-700 text-blue-400 transition-colors">🏮 등용</button>
+<button onclick="switchTab('codex')" id="tab-codex" class="flex-1 py-3 text-center rounded hover:bg-slate-700 text-emerald-400 transition-colors">📖 도감</button>
+<button onclick="switchTab('legacy')" id="tab-legacy" class="flex-1 py-3 text-center rounded hover:bg-slate-700 text-purple-400 transition-colors">🏛️ 가문</button>
+</footer>
 
-    <div id="gacha-fx" class="hidden fixed inset-0 z-[60] flex flex-col items-center justify-center pointer-events-none">
-        <h1 id="fx-text" class="tracking-widest"></h1>
-    </div>
+<div id="gacha-fx" class="hidden fixed inset-0 z-[60] flex flex-col items-center justify-center pointer-events-none">
+<h1 id="fx-text" class="tracking-widest"></h1>
+</div>
 
-    <div id="modal-gacha" class="hidden fixed inset-0 z-50 bg-black/95 flex flex-col items-center justify-center p-4 backdrop-blur-md">
-        <div class="text-center w-full max-w-sm">
-            <h2 class="text-2xl font-bold text-amber-400 mb-4 border-b border-slate-700 pb-2">등용 결과</h2>
-            <div id="gacha-result-list" class="grid grid-cols-2 gap-3 max-h-[60vh] overflow-y-auto pr-1 pb-4"></div>
-            <button onclick="closeModal('modal-gacha')" class="mt-4 w-full py-4 bg-slate-700 text-white font-bold rounded-xl shadow-lg active:scale-95">확인 완료</button>
-        </div>
-    </div>
+<div id="modal-gacha" class="hidden fixed inset-0 z-50 bg-black/95 flex flex-col items-center justify-center p-4 backdrop-blur-md">
+<div class="text-center w-full max-w-sm">
+<h2 class="text-2xl font-bold text-amber-400 mb-4 border-b border-slate-700 pb-2">등용 결과</h2>
+<div id="gacha-result-list" class="grid grid-cols-2 gap-3 max-h-[60vh] overflow-y-auto pr-1 pb-4"></div>
+<button onclick="closeModal('modal-gacha')" class="mt-4 w-full py-4 bg-slate-700 text-white font-bold rounded-xl shadow-lg active:scale-95">확인 완료</button>
+</div>
+</div>
 
-    <script>
-        var state = {
-            activeTab: 'gacha',
-            player: {
-                resources: { skyStones: 5000, tacticsManuals: 0, legacyPoints: 0 },
-                roster: [],
-                party: [null, null, null, null, null]
-            },
-            battle: { timer: null, logs: [], ally: [], enemy: [] }
-        };
+<div id="modal-char-info" class="hidden fixed inset-0 z-[70] bg-black/90 flex flex-col items-center justify-center p-4 backdrop-blur-md transition-opacity">
+<div class="bg-slate-800 border border-slate-600 rounded-2xl w-full max-w-sm p-5 relative shadow-2xl overflow-y-auto max-h-[85vh] custom-scrollbar">
+<button onclick="closeModal('modal-char-info')" class="absolute top-3 right-3 w-8 h-8 bg-slate-700 rounded-full flex items-center justify-center font-bold text-slate-300 hover:text-white border border-slate-500 z-20">X</button>
+<div id="char-modal-content" class="flex flex-col items-center pt-2"></div>
+</div>
+</div>
 
-        const attrMap = { '천': '天', '지': '地', '인': '人' };
+<script>
+var state = {
+activeTab: 'gacha',
+player: {
+resources: { skyStones: 5000, tacticsManuals: 0, legacyPoints: 0 },
+roster: [],
+party: [null, null, null, null, null]
+},
+battle: { timer: null, logs: [], ally: [], enemy: [] }
+};
 
-        var HERO_DB = [
-            { id: 'H001', name: '유비', grade: 'UR', role: '군주', attr: '인', stats: { str: 60, int: 85, con: 80, spd: 65 } },
-            { id: 'H002', name: '관우', grade: 'UR', role: '맹장', attr: '천', stats: { str: 98, int: 75, con: 85, spd: 78 } },
-            { id: 'H003', name: '장비', grade: 'UR', role: '호위', attr: '지', stats: { str: 97, int: 40, con: 95, spd: 70 } },
-            { id: 'H004', name: '조운', grade: 'UR', role: '맹장', attr: '인', stats: { str: 96, int: 70, con: 85, spd: 92 } },
-            { id: 'H005', name: '여포', grade: 'UR', role: '맹장', attr: '천', stats: { str: 100, int: 30, con: 90, spd: 85 } },
-            { id: 'H006', name: '제갈량', grade: 'UR', role: '모사', attr: '천', stats: { str: 20, int: 100, con: 60, spd: 80 } },
-            { id: 'H007', name: '하후돈', grade: 'SSR', role: '호위', attr: '천', stats: { str: 88, int: 60, con: 92, spd: 62 } },
-            { id: 'H008', name: '마초', grade: 'SSR', role: '맹장', attr: '지', stats: { str: 93, int: 45, con: 80, spd: 88 } },
-            { id: 'H009', name: '위연', grade: 'SR', role: '맹장', attr: '인', stats: { str: 85, int: 50, con: 75, spd: 75 } },
-            { id: 'H010', name: '황개', grade: 'R', role: '호위', attr: '지', stats: { str: 75, int: 60, con: 80, spd: 55 } },
-            { id: 'H011', name: '황건적', grade: 'N', role: '맹장', attr: '지', stats: { str: 30, int: 10, con: 30, spd: 30 } },
-            { id: 'H012', name: '민병대', grade: 'N', role: '호위', attr: '인', stats: { str: 20, int: 10, con: 40, spd: 25 } },
-            { id: 'H013', name: '서량기병', grade: 'N', role: '맹장', attr: '천', stats: { str: 40, int: 15, con: 35, spd: 45 } }
-        ];
+const attrMap = { '천': '天', '지': '地', '인': '人' };
 
-        function getImgUrl(seed) {
-            return `https://api.dicebear.com/9.x/adventurer/svg?seed=${seed}&backgroundColor=0f172a`;
-        }
+// 1. 사전에 준비하신 100명 인재풀이 들어갈 위치입니다. (테스트용 핵심 무장 15명 탑재)
+var HERO_DB = [
+{ id: 'H001', name: '유비', grade: 'UR', role: '군주', attr: '인', stats: { str: 60, int: 85, con: 80, spd: 65 }, skill: { name: '도원결의', desc: '전투 시작 시 아군 전체의 체력과 방어력을 대폭 상승시킵니다.' }, bonds: '도원결의 (관우, 장비 보유시 방어 15% 증가)' },
+{ id: 'H002', name: '관우', grade: 'UR', role: '맹장', attr: '천', stats: { str: 98, int: 75, con: 85, spd: 78 }, skill: { name: '청룡참', desc: '단일 적에게 무력 250%의 치명적 피해를 입히고 기절시킵니다.' }, bonds: '오호대장군 (공격력 20% 증가)' },
+{ id: 'H003', name: '장비', grade: 'UR', role: '호위', attr: '지', stats: { str: 97, int: 40, con: 95, spd: 70 }, skill: { name: '사자후', desc: '적 전체에게 확률적 기절 부여 및 3턴간 적의 공격을 자신에게 도발합니다.' }, bonds: '도원결의 (관우, 유비 보유시 체력 20% 증가)' },
+{ id: 'H004', name: '조운', grade: 'UR', role: '맹장', attr: '인', stats: { str: 96, int: 70, con: 85, spd: 92 }, skill: { name: '일신시담', desc: '자신의 민첩을 50% 올리고 2회 연속 공격합니다.' }, bonds: '오호대장군 (조운, 관우, 장비 등)' },
+{ id: 'H005', name: '여포', grade: 'UR', role: '맹장', attr: '천', stats: { str: 100, int: 30, con: 90, spd: 85 }, skill: { name: '무쌍난무', desc: '적 전체에게 무력 150%의 광역 방어구 관통 피해를 입힙니다.' }, bonds: '인중여포 (동탁과 인연, 무력 15% 증가)' },
+{ id: 'H006', name: '제갈량', grade: 'UR', role: '모사', attr: '천', stats: { str: 20, int: 100, con: 60, spd: 80 }, skill: { name: '동남풍', desc: '지력 200%의 광역 화속성 피해를 주며 적의 민첩을 깎습니다.' }, bonds: '와룡봉추 (방통 보유시 지력 20% 증가)' },
+{ id: 'H007', name: '조조', grade: 'UR', role: '군주', attr: '지', stats: { str: 75, int: 95, con: 90, spd: 80 }, skill: { name: '천하패도', desc: '아군 전체의 무력과 지력을 3턴간 상승시킵니다.' }, bonds: '위무제 (하후돈, 하후연 보유 시 통솔 15% 증가)' },
+{ id: 'H008', name: '하후돈', grade: 'SSR', role: '호위', attr: '천', stats: { str: 88, int: 60, con: 92, spd: 62 }, skill: { name: '맹장의 분노', desc: '피격 시 받은 피해의 50%를 반사합니다.' }, bonds: '조조의 심복 (조조 보유시 체력 10% 증가)' },
+{ id: 'H009', name: '마초', grade: 'SSR', role: '맹장', attr: '지', stats: { str: 93, int: 45, con: 80, spd: 88 }, skill: { name: '철기돌격', desc: '관통 피해 및 방어력 감소 디버프를 부여합니다.' }, bonds: '서량의 맹장' },
+{ id: 'H010', name: '위연', grade: 'SR', role: '맹장', attr: '인', stats: { str: 85, int: 50, con: 75, spd: 75 }, skill: { name: '반골의 일격', desc: '체력이 낮을수록 강력한 데미지를 가합니다.' }, bonds: '불운한 명장' },
+{ id: 'H011', name: '황개', grade: 'R', role: '호위', attr: '지', stats: { str: 75, int: 60, con: 80, spd: 55 }, skill: { name: '고육지책', desc: '자신의 체력을 깎아 아군 전체 방어력을 대폭 상승시킵니다.' }, bonds: '적벽의 불꽃' },
+{ id: 'H012', name: '주창', grade: 'R', role: '맹장', attr: '인', stats: { str: 78, int: 30, con: 70, spd: 60 }, skill: { name: '대도 휘두르기', desc: '전방의 적에게 강한 타격을 입힙니다.' }, bonds: '충직한 종자' },
+{ id: 'H013', name: '황건적', grade: 'N', role: '맹장', attr: '지', stats: { str: 30, int: 10, con: 30, spd: 30 }, skill: { name: '창찌르기', desc: '조악한 창으로 기본 공격을 합니다.' }, bonds: '황건의 난 (다수 출전 시 체력 소폭 증가)' },
+{ id: 'H014', name: '민병대', grade: 'N', role: '호위', attr: '인', stats: { str: 20, int: 10, con: 40, spd: 25 }, skill: { name: '방패막기', desc: '자신의 방어력을 소폭 상승시킵니다.' }, bonds: '농민의 분노' },
+{ id: 'H015', name: '서량기병', grade: 'N', role: '맹장', attr: '천', stats: { str: 40, int: 15, con: 35, spd: 45 }, skill: { name: '돌진', desc: '말을 타고 단일 대상에게 돌진합니다.' }, bonds: '강력한 기병대' }
+// 여기에 나머지 85명의 데이터를 추가해 주시면 됩니다.
+ ];
 
-        function updateUI() {
-            document.getElementById('ui-skystone').innerText = state.player.resources.skyStones.toLocaleString();
-            document.getElementById('ui-manual').innerText = state.player.resources.tacticsManuals.toLocaleString();
-            document.getElementById('ui-legacy').innerText = state.player.resources.legacyPoints.toLocaleString();
-        }
+// 다이스베어 API를 이용한 아바타 자동 생성
+function getImgUrl(seed) {
+return https://api.dicebear.com/9.x/adventurer/svg?seed=${seed}&backgroundColor=0f172a`;
+}
 
-        function switchTab(tab) {
-            state.activeTab = tab;
-            if(state.battle.timer) clearInterval(state.battle.timer);
-            
-            ['barracks', 'battle', 'gacha', 'legacy'].forEach(t => {
-                let btn = document.getElementById('tab-' + t);
-                if(btn) btn.classList.remove('bg-slate-700');
-            });
-            let activeBtn = document.getElementById('tab-' + tab);
-            if(activeBtn) activeBtn.classList.add('bg-slate-700');
+function updateUI() {
+document.getElementById('ui-skystone').innerText = state.player.resources.skyStones.toLocaleString();
+document.getElementById('ui-manual').innerText = state.player.resources.tacticsManuals.toLocaleString();
+document.getElementById('ui-legacy').innerText = state.player.resources.legacyPoints.toLocaleString();
+}
 
-            var main = document.getElementById('main-content');
-            if(!main) return;
-            main.className = (tab === 'battle') ? "flex-1 overflow-hidden relative w-full flex flex-col" : "flex-1 overflow-y-auto p-4 relative w-full flex flex-col";
+function switchTab(tab) {
+state.activeTab = tab;
+if(state.battle.timer) clearInterval(state.battle.timer);
 
-            if (tab === 'gacha') renderGacha(main);
-            else if (tab === 'barracks') renderBarracks(main);
-            else if (tab === 'battle') initBattle(main);
-            else main.innerHTML = '<div class="flex items-center justify-center h-full text-slate-500">준비 중입니다.</div>';
-        }
+['barracks', 'battle', 'gacha', 'codex', 'legacy'].forEach(t => {
+let btn = document.getElementById('tab-' + t);
+if(btn) btn.classList.remove('bg-slate-700');
+});
+let activeBtn = document.getElementById('tab-' + tab);
+if(activeBtn) activeBtn.classList.add('bg-slate-700');
 
-        /* --- 1. 등용문 (가챠) --- */
-        function renderGacha(container) {
-            container.innerHTML = 
-                `<div class="text-center mt-6 mb-8">
-                    <h2 class="text-3xl font-bold text-blue-400 mb-2 drop-shadow-md">🏮 천기 등용문</h2>
-                    <p class="text-xs text-slate-400">0.05%의 기적, 신화 무장을 소환하세요.</p>
-                </div>
-                <div class="flex flex-col gap-5 max-w-xs mx-auto mt-10">
-                    <button onclick="doGacha(1)" class="w-full py-4 bg-slate-800 border-2 border-blue-500/30 rounded-xl font-bold text-white shadow-lg active:scale-95 transition-transform">1회 소환 <span class="text-sky-300 text-xs ml-2">💠 100</span></button>
-                    <button onclick="doGacha(10)" class="w-full py-5 bg-slate-800 border-2 border-amber-500/50 rounded-xl font-bold text-lg text-white shadow-[0_0_15px_rgba(245,158,11,0.2)] active:scale-95 transition-transform">10회 소환 <span class="text-amber-300 text-sm ml-2">💠 1,000</span></button>
-                </div>`;
-        }
+var main = document.getElementById('main-content');
+if(!main) return;
+main.className = (tab === 'battle') ? "flex-1 overflow-hidden relative w-full flex flex-col" : "flex-1 overflow-y-auto p-4 relative w-full flex flex-col";
 
-        function doGacha(times) {
-            var cost = times * 100;
-            if(state.player.resources.skyStones < cost) return alert("천운석이 부족합니다!");
-            state.player.resources.skyStones -= cost;
-            
-            var results = [];
-            var highestGrade = 'N';
+if (tab === 'gacha') renderGacha(main);
+else if (tab === 'barracks') renderBarracks(main);
+else if (tab === 'battle') initBattle(main);
+else if (tab === 'codex') renderCodex(main);
+else main.innerHTML = '<div class="flex items-center justify-center h-full text-slate-500">준비 중입니다.</div>';
+}
 
-            for(var i=0; i<times; i++) {
-                var roll = Math.random() * 100;
-                var grade = roll < 0.05 ? 'UR' : (roll < 1.05 ? 'SSR' : (roll < 11.05 ? 'SR' : (roll < 51.05 ? 'R' : 'N')));
-                
-                if(grade === 'UR') highestGrade = 'UR';
-                else if(grade === 'SSR' && highestGrade !== 'UR') highestGrade = 'SSR';
+/* --- 1. 등용문 (가챠) --- */
+function renderGacha(container) {
+container.innerHTML =
+<div class="text-center mt-6 mb-8"&gt; &lt;h2 class="text-3xl font-bold text-blue-400 mb-2 drop-shadow-md"&gt;🏮 천기 등용문&lt;/h2&gt; &lt;p class="text-xs text-slate-400"&gt;0.05%의 기적, 신화 무장을 소환하세요.&lt;/p&gt; &lt;/div&gt; &lt;div class="flex flex-col gap-5 max-w-xs mx-auto mt-10"&gt; &lt;button onclick="doGacha(1)" class="w-full py-4 bg-slate-800 border-2 border-blue-500/30 rounded-xl font-bold text-white shadow-lg active:scale-95 transition-transform"&gt;1회 소환 &lt;span class="text-sky-300 text-xs ml-2"&gt;💠 100&lt;/span&gt;&lt;/button&gt; &lt;button onclick="doGacha(10)" class="w-full py-5 bg-slate-800 border-2 border-amber-500/50 rounded-xl font-bold text-lg text-white shadow-[0_0_15px_rgba(245,158,11,0.2)] active:scale-95 transition-transform"&gt;10회 소환 &lt;span class="text-amber-300 text-sm ml-2"&gt;💠 1,000&lt;/span&gt;&lt;/button&gt; &lt;/div>;
+}
 
-                var pool = HERO_DB.filter(h => h.grade === grade);
-                if(pool.length === 0) pool = HERO_DB.filter(h => h.grade === 'N');
-                var hero = pool[Math.floor(Math.random() * pool.length)];
-                
-                var existing = state.player.roster.find(r => r.id === hero.id);
-                if(existing) { 
-                    existing.count++; 
-                    results.push({...hero, isDup: true}); 
-                } else { 
-                    state.player.roster.push({id: hero.id, count: 1}); 
-                    results.push({...hero, isDup: false}); 
-                }
-            }
-            updateUI();
-            
-            // 이펙트 판정
-            if(highestGrade === 'UR' || highestGrade === 'SSR') {
-                playGachaFX(highestGrade, results);
-            } else {
-                showGachaResults(results);
-            }
-        }
+function doGacha(times) {
+var cost = times * 100;
+if(state.player.resources.skyStones < cost) return alert("천운석이 부족합니다!");
+state.player.resources.skyStones -= cost;
 
-        function playGachaFX(grade, results) {
-            var fxScreen = document.getElementById('gacha-fx');
-            var fxText = document.getElementById('fx-text');
-            fxScreen.classList.remove('hidden');
+var results = [];
+var highestGrade = 'N';
 
-            if(grade === 'UR') {
-                fxScreen.className = 'fixed inset-0 z-[60] flex flex-col items-center justify-center pointer-events-none fx-ur';
-                fxText.innerHTML = '<span class="text-red-500 drop-shadow-[0_0_20px_#ef4444] text-4xl font-black">천기가 요동칩니다...!!</span>';
-            } else {
-                fxScreen.className = 'fixed inset-0 z-[60] flex flex-col items-center justify-center pointer-events-none fx-ssr';
-                fxText.innerHTML = '<span class="text-amber-400 drop-shadow-[0_0_15px_#f59e0b] text-3xl font-bold">영웅의 기운이 느껴집니다!</span>';
-            }
+for(var i=0; i<times; i++) {
+var roll = Math.random() * 100;
+var grade = roll < 0.05 ? 'UR' : (roll < 1.05 ? 'SSR' : (roll < 11.05 ? 'SR' : (roll < 51.05 ? 'R' : 'N')));
 
-            setTimeout(() => {
-                fxScreen.classList.add('hidden');
-                showGachaResults(results);
-            }, 2500); // 2.5초간 화려한 이펙트 지속
-        }
+if(grade === 'UR') highestGrade = 'UR';
+else if(grade === 'SSR' && highestGrade !== 'UR') highestGrade = 'SSR';
 
-        function showGachaResults(results) {
-            var html = '';
-            results.forEach(r => {
-                var border = r.grade === 'UR' ? 'border-red-500 bg-red-900/30' : (r.grade === 'SSR' ? 'border-amber-500 bg-amber-900/30' : 'border-slate-700 bg-slate-800');
-                var txt = r.isDup ? `<div class="text-[9px] mt-1 text-amber-400 font-bold">✨ 돌파 조각</div>` : `<div class="text-[10px] mt-1 text-green-400 font-bold">NEW!</div>`;
-                var attrChar = attrMap[r.attr] || '無';
+var pool = HERO_DB.filter(h => h.grade === grade);
+if(pool.length === 0) pool = HERO_DB.filter(h => h.grade === 'N');
+var hero = pool[Math.floor(Math.random() * pool.length)];
 
-                html += `
-                    <div class="border ${border} p-3 rounded-xl text-center shadow-lg relative overflow-hidden flex flex-col items-center">
-                        <span class="absolute top-1 left-1 text-[10px] bg-black/50 px-1 rounded attr-${attrChar}">${attrChar}</span>
-                        <div class="text-[10px] text-slate-400 mb-1 absolute top-1 right-1">${r.grade}</div>
-                        <img src="${getImgUrl(r.id)}" class="w-14 h-14 rounded-full border border-slate-600 mb-2 mt-2 bg-slate-900 shadow-inner">
-                        <div class="font-bold text-sm grade-${r.grade}">${r.name}</div>
-                        ${txt}
-                    </div>`;
-            });
-            document.getElementById('gacha-result-list').innerHTML = html;
-            document.getElementById('modal-gacha').classList.remove('hidden');
-        }
+var existing = state.player.roster.find(r => r.id === hero.id);
+if(existing) {
+existing.count++;
+results.push({...hero, isDup: true});
+} else {
+state.player.roster.push({id: hero.id, count: 1});
+results.push({...hero, isDup: false});
+}
+}
+updateUI();
 
-        /* --- 2. 막사 (편성) --- */
-        function renderBarracks(container) {
-            var html = `<div class="text-center mb-4 font-bold text-amber-400 drop-shadow">전술 진형 편성 (터치하여 해제)</div><div class="flex gap-2 mb-6 justify-center w-full max-w-sm mx-auto">`;
-            for(var i=0; i<5; i++) {
-                var id = state.player.party[i];
-                var h = id ? HERO_DB.find(x => x.id === id) : null;
-                var style = h ? 'border-sky-500 bg-slate-800 shadow-[0_0_8px_rgba(14,165,233,0.3)]' : 'border-slate-700 bg-slate-900 border-dashed opacity-60';
-                
-                html += `<div onclick="removeFromParty(${i})" class="w-[70px] h-[90px] border-2 ${style} rounded-lg flex flex-col items-center justify-center cursor-pointer relative overflow-hidden p-1">`;
-                if(h) {
-                    html += `<img src="${getImgUrl(h.id)}" class="w-8 h-8 rounded-full mb-1">
-                             <span class="text-[11px] font-bold grade-${h.grade} leading-tight">${h.name}</span>
-                             <span class="text-[10px] attr-${attrMap[h.attr]} mt-1 font-black">${attrMap[h.attr]}</span>`;
-                } else {
-                    html += `<span class="text-[10px] text-slate-500">비어있음</span>`;
-                }
-                html += `</div>`;
-            }
-            
-            html += `</div><div class="text-xs font-bold mb-2 border-b border-slate-700 pb-1 text-slate-300">보유 무장 <span class="font-normal text-[10px] text-slate-500">(터치하여 출전)</span></div><div class="flex-1 overflow-y-auto space-y-2 pb-10">`;
-            
-            if(state.player.roster.length === 0) {
-                html += '<div class="text-center text-slate-500 py-6 text-[11px] bg-slate-800/50 rounded-lg">보유한 무장이 없습니다.</div>';
-            } else {
-                state.player.roster.forEach(r => {
-                    var d = HERO_DB.find(x => x.id === r.id);
-                    var inP = state.player.party.includes(d.id);
-                    var bStyle = inP ? 'border-slate-700 opacity-50' : 'border-slate-600 bg-slate-800 active:bg-slate-700';
-                    var statStr = `무${d.stats.str} 지${d.stats.int} 통${d.stats.con} 속${d.stats.spd}`;
-                    var attrChar = attrMap[d.attr];
-                    
-                    html += `
-                        <div onclick="${inP ? '' : `addToParty('${d.id}')`}" class="p-3 rounded-lg border ${bStyle} flex justify-between items-center transition-all">
-                            <div class="flex items-center gap-3">
-                                <img src="${getImgUrl(d.id)}" class="w-12 h-12 rounded-lg border border-slate-600 bg-slate-900 shadow-md">
-                                <div>
-                                    <div class="grade-${d.grade} font-bold text-base mb-1">${d.name} <span class="attr-${attrChar} text-[12px] ml-1">(${attrChar})</span></div>
-                                    <div class="text-[10px] text-slate-400">${statStr}</div>
-                                </div>
-                            </div>
-                            <div class="flex flex-col items-end gap-1">
-                                <div class="text-[10px] font-bold ${inP ? 'text-slate-600' : 'text-amber-400 bg-amber-900/30 px-3 py-1.5 rounded'}">${inP ? '출전중' : '배치'}</div>
-                                <div class="text-[9px] text-slate-500">x${r.count}</div>
-                            </div>
-                        </div>`;
-                });
-            }
-            container.innerHTML = html + '</div>';
-        }
+// 이펙트 판정 (사전 이펙트)
+if(highestGrade === 'UR' || highestGrade === 'SSR') {
+playGachaFX(highestGrade, results);
+} else {
+showGachaResults(results);
+}
+}
 
-        function addToParty(id) {
-            var idx = state.player.party.indexOf(null);
-            if(idx !== -1) { state.player.party[idx] = id; renderBarracks(document.getElementById('main-content')); }
-            else { alert("진형이 꽉 찼습니다! 위 편성창에서 무장을 터치해 해제하세요."); }
-        }
-        function removeFromParty(i) {
-            state.player.party[i] = null; renderBarracks(document.getElementById('main-content'));
-        }
-        function closeModal(id) { document.getElementById(id).classList.add('hidden'); }
+function playGachaFX(grade, results) {
+var fxScreen = document.getElementById('gacha-fx');
+var fxText = document.getElementById('fx-text');
+fxScreen.classList.remove('hidden');
 
-        /* --- 3. 출정 (ATB 전투) --- */
-        function initBattle(container) {
-            var hasHero = state.player.party.some(id => id !== null);
-            if (!hasHero) {
-                container.innerHTML = '<div class="text-center pt-20 text-slate-400">출전할 무장이 없습니다.<br>막사에서 파티를 편성해주세요.</div>';
-                return;
-            }
+if(grade === 'UR') {
+fxScreen.className = 'fixed inset-0 z-[60] flex flex-col items-center justify-center pointer-events-none fx-ur';
+fxText.innerHTML = '<span class="text-red-500 drop-shadow-[0_0_20px_#ef4444] text-4xl font-black">천기가 요동칩니다...!!</span>';
+} else {
+fxScreen.className = 'fixed inset-0 z-[60] flex flex-col items-center justify-center pointer-events-none fx-ssr';
+fxText.innerHTML = '<span class="text-amber-400 drop-shadow-[0_0_15px_#f59e0b] text-3xl font-bold">영웅의 기운이 느껴집니다!</span>';
+}
 
-            state.battle.logs = ["전투가 시작되었습니다!"];
-            
-            state.battle.ally = state.player.party.map((id, idx) => {
-                if (!id) return null;
-                var d = HERO_DB.find(h => h.id === id);
-                return {...d, hp: d.stats.con * 50, maxHp: d.stats.con * 50, atb: 0, pos: idx, side: 'ally' };
-            }).filter(u => u !== null);
+setTimeout(() => {
+fxScreen.classList.add('hidden');
+showGachaResults(results);
+}, 2500);
+}
 
-            state.battle.enemy = [
-                { id: 'E1', name: '황건적 대장', grade: 'R', role: '맹장', attr: '지', stats: { str: 45, int: 20, con: 50, spd: 40 }, side: 'enemy' },
-                { id: 'E2', name: '황건적 졸개', grade: 'N', role: '맹장', attr: '지', stats: { str: 30, int: 10, con: 30, spd: 30 }, side: 'enemy' },
-                { id: 'E3', name: '황건적 졸개', grade: 'N', role: '맹장', attr: '지', stats: { str: 30, int: 10, con: 30, spd: 30 }, side: 'enemy' }
-            ].map(e => ({...e, hp: e.stats.con * 50, maxHp: e.stats.con * 50, atb: 0 }));
+function showGachaResults(results) {
+var html = '';
+results.forEach(r => {
+var border = r.grade === 'UR' ? 'border-red-500 bg-red-900/30' : (r.grade === 'SSR' ? 'border-amber-500 bg-amber-900/30' : 'border-slate-700 bg-slate-800');
+var txt = r.isDup ? <div class="text-[9px] mt-1 text-amber-400 font-bold"&gt;✨ 돌파 조각&lt;/div> : <div class="text-[10px] mt-1 text-green-400 font-bold"&gt;NEW!&lt;/div>;
+var attrChar = attrMap[r.attr] || '無';
 
-            renderBattleScreen(container);
-            state.battle.timer = setInterval(battleTick, 100);
-        }
+html += &lt;div class="border${border} p-3 rounded-xl text-center shadow-lg relative overflow-hidden flex flex-col items-center">
+<span class="absolute top-1 left-1 text-[10px] bg-black/50 px-1 rounded attr-{attrChar}</span>
+<div class="text-[10px] text-slate-400 mb-1 absolute top-1 right-1">{getImgUrl(r.id)}" class="w-14 h-14 rounded-full border border-slate-600 mb-2 mt-2 bg-slate-900 shadow-inner">
+<div class="font-bold text-sm grade-{r.name}</div>
+${txt} &lt;/div>;
+});
+document.getElementById('gacha-result-list').innerHTML = html;
+document.getElementById('modal-gacha').classList.remove('hidden');
+}
 
-        function battleTick() {
-            var allUnits = state.battle.ally.concat(state.battle.enemy);
-            var allyAlive = state.battle.ally.filter(u => u.hp > 0).length;
-            var enemyAlive = state.battle.enemy.filter(u => u.hp > 0).length;
-            
-            if(allyAlive === 0 || enemyAlive === 0) {
-                clearInterval(state.battle.timer);
-                addLog(allyAlive === 0 ? "패배했습니다..." : "✨ 전투 승리! 전리품을 획득했습니다!");
-                updateBattleUI();
-                return;
-            }
+/* --- 2. 막사 (편성) --- */
+function renderBarracks(container) {
+var html = <div class="text-center mb-4 font-bold text-amber-400 drop-shadow"&gt;전술 진형 편성 (터치하여 해제)&lt;/div&gt;&lt;div class="flex gap-2 mb-6 justify-center w-full max-w-sm mx-auto">;
+for(var i=0; i<5; i++) {
+var id = state.player.party[i];
+var h = id ? HERO_DB.find(x => x.id === id) : null;
+var style = h ? 'border-sky-500 bg-slate-800 shadow-[0_0_8px_rgba(14,165,233,0.3)]' : 'border-slate-700 bg-slate-900 border-dashed opacity-60';
 
-            allUnits.forEach(u => { if (u.hp > 0) u.atb += u.stats.spd * 0.5; });
-            var activeUnit = allUnits.find(u => u.atb >= 1000);
-            
-            if (activeUnit) {
-                executeTurn(activeUnit);
-                activeUnit.atb = 0;
-            }
-            updateBattleUI();
-        }
+html += <div onclick="removeFromParty(${i})" class="w-[70px] h-[90px] border-2 latex
+{style} rounded-lg flex flex-col items-center justify-center cursor-pointer relative overflow-hidden p-1">`; if(h) { html += `<img src="
 
-        function executeTurn(unit) {
-            var targets = unit.side === 'ally' ? state.battle.enemy : state.battle.ally;
-            var aliveTargets = targets.filter(t => t.hp > 0);
-            if (aliveTargets.length === 0) return;
+{getImgUrl(h.id)}" class="w-8 h-8 rounded-full mb-1">
+<span class="text-[11px] font-bold grade-{h.name}</span>
+<span class="text-[10px] attr-{attrMap[h.attr]}</span>; } else { html +=<span class="text-[10px] text-slate-500">비어있음</span>; } html +=`;
+}
 
-            var target = aliveTargets[Math.floor(Math.random() * aliveTargets.length)];
-            
-            var baseDmg = unit.stats.str * 5;
-            var def = target.stats.con * 2;
-            var miti = 100 / (100 + def);
-            
-            var attrBonus = 1.0;
-            if ((unit.attr === '천' && target.attr === '지') || (unit.attr === '지' && target.attr === '인') || (unit.attr === '인' && target.attr === '천')) {
-                attrBonus = 1.3;
-            }
-            
-            var finalDmg = Math.floor(baseDmg * miti * attrBonus);
-            finalDmg = Math.max(1, finalDmg);
-            target.hp = Math.max(0, target.hp - finalDmg);
+html += </div&gt;&lt;div class="text-xs font-bold mb-2 border-b border-slate-700 pb-1 text-slate-300"&gt;보유 무장 &lt;span class="font-normal text-[10px] text-slate-500"&gt;(좌측 클릭 시 상세정보)&lt;/span&gt;&lt;/div&gt;&lt;div class="flex-1 overflow-y-auto space-y-2 pb-10">;
 
-            var logStr = `<span class='grade-${unit.grade} font-bold'>${unit.name}</span>의 타격! ${target.name}에게 <span class='text-red-400 font-bold'>${finalDmg}</span> 피해!`;
-            if(attrBonus > 1.0) logStr += " <span class='text-[9px] text-amber-400'>(상성 우위!)</span>";
-            addLog(logStr);
-        }
+if(state.player.roster.length === 0) {
+html += '<div class="text-center text-slate-500 py-6 text-[11px] bg-slate-800/50 rounded-lg">보유한 무장이 없습니다.</div>';
+} else {
+state.player.roster.forEach(r => {
+var d = HERO_DB.find(x => x.id === r.id);
+var inP = state.player.party.includes(d.id);
+var bStyle = inP ? 'border-slate-700 opacity-50' : 'border-slate-600 bg-slate-800 active:bg-slate-700';
+var statStr = 무${d.stats.str} 지${d.stats.int} 통${d.stats.con} 속${d.stats.spd};
+var attrChar = attrMap[d.attr];
 
-        function addLog(msg) {
-            state.battle.logs.unshift(msg);
-            if (state.battle.logs.length > 50) state.battle.logs.pop();
-            var logEl = document.getElementById('battle-logs');
-            if (logEl) {
-                logEl.innerHTML = state.battle.logs.map((l, i) => {
-                    var opacity = i === 0 ? 'opacity-100 font-bold text-white' : (i < 3 ? 'opacity-80' : 'opacity-40 text-[10px]');
-                    return `<div class="mb-1 pb-1 border-b border-slate-800/50 ${opacity}">${l}</div>`;
-                }).join('');
-            }
-        }
+html += &lt;div class="p-3 rounded-lg border ${bStyle} flex justify-between items-center transition-all">
+<div class="flex items-center gap-3 cursor-pointer" onclick="openCharModal('${d.id}')"&gt; &lt;img src="${getImgUrl(d.id)}" class="w-12 h-12 rounded-lg border border-slate-600 bg-slate-900 shadow-md">
+<div>
+<div class="grade-${d.grade} font-bold text-base mb-1"&gt;${d.name} <span class="attr-${attrChar} text-[12px] ml-1"&gt;(${attrChar})</span></div>
+<div class="text-[10px] text-slate-400">${statStr}&lt;/div&gt; &lt;/div&gt; &lt;/div&gt; &lt;div class="flex flex-col items-end gap-1"&gt; &lt;button onclick="${inP ? removeFromPartyByHero('${d.id}'):addToParty('latex
+{d.id}')`}" class="text-[10px] font-bold 
 
-        function renderBattleScreen(container) {
-            container.innerHTML = 
-                `<div class="flex-1 flex flex-col p-2 h-full bg-[url('data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI0IiBoZWlnaHQ9IjQiPgo8cmVjdCB3aWR0aD0iNCIgaGVpZ2h0PSI0IiBmaWxsPSIjMGYxNzJhIj48L3JlY3Q+CjxyZWN0IHdpZHRoPSIxIiBoZWlnaHQ9IjEiIGZpbGw9IiMxZTI5M2IiPjwvcmVjdD4KPC9zdmc+')]">
-                    <div id="enemy-area" class="flex justify-around items-end h-[35%] pb-2"></div>
-                    <div id="battle-logs" class="flex-1 bg-black/60 rounded-xl p-3 overflow-y-auto text-[11px] text-slate-300 border border-slate-700/50 shadow-inner my-2 custom-scrollbar"></div>
-                    <div id="ally-area" class="flex justify-around items-start h-[35%] pt-2"></div>
-                </div>`;
-            updateBattleUI();
-        }
+{inP ? 'text-slate-400 bg-slate-700 px-3 py-1.5 rounded border border-slate-600' : 'text-amber-400 bg-amber-900/30 px-3 py-1.5 rounded border border-amber-500/50 active:scale-95'}">{r.count} 돌파</div>
+</div>
+</div>`;
+});
+}
+container.innerHTML = html + '</div>';
+}
 
-        function updateBattleUI() {
-            var enemyArea = document.getElementById('enemy-area');
-            var allyArea = document.getElementById('ally-area');
-            if (!enemyArea || !allyArea) return;
+function addToParty(id) {
+var idx = state.player.party.indexOf(null);
+if(idx !== -1) { state.player.party[idx] = id; renderBarracks(document.getElementById('main-content')); }
+else { alert("진형이 꽉 찼습니다! 위 편성창에서 무장을 터치해 해제하세요."); }
+}
+function removeFromParty(i) {
+state.player.party[i] = null; renderBarracks(document.getElementById('main-content'));
+}
+function removeFromPartyByHero(id) {
+var idx = state.player.party.indexOf(id);
+if(idx !== -1) { state.player.party[idx] = null; renderBarracks(document.getElementById('main-content')); }
+}
 
-            var unitHtml = (u) => {
-                var isDead = u.hp <= 0;
-                var hpPct = (u.hp / u.maxHp) * 100;
-                var atbPct = Math.min(100, (u.atb / 1000) * 100);
-                
-                return `
-                    <div class="flex flex-col items-center w-[4.5rem] transition-opacity ${isDead ? 'opacity-30 grayscale' : ''}">
-                        <div class="relative">
-                            <img src="${getImgUrl(u.id)}" class="w-10 h-10 rounded-full border-2 ${u.side==='ally'?'border-sky-500':'border-red-500'} bg-slate-900 shadow-lg mb-1">
-                            <span class="absolute -top-1 -right-1 text-[8px] attr-${attrMap[u.attr]} bg-black/80 px-1 rounded-full border border-slate-600">${attrMap[u.attr]}</span>
-                        </div>
-                        <div class="text-[9px] mb-1 font-bold grade-${u.grade} truncate w-full text-center">${u.name}</div>
-                        <div class="w-full bg-slate-900 h-1.5 rounded-full overflow-hidden mb-1 border border-slate-700">
-                            <div class="hp-bar ${u.side==='ally'?'bg-green-500':'bg-red-500'} h-full" style="width: ${hpPct}%"></div>
-                        </div>
-                        <div class="w-full bg-slate-900 h-1 rounded-full overflow-hidden border border-slate-700">
-                            <div class="bg-sky-400 h-full" style="width: ${atbPct}%"></div>
-                        </div>
-                    </div>`;
-            };
+/* --- 3. 영웅 도감 (Codex) 신규 구현 --- */
+function renderCodex(container) {
+var ownedCount = state.player.roster.length;
+var totalCount = HERO_DB.length;
+var pct = Math.floor((ownedCount / totalCount) * 100);
 
-            enemyArea.innerHTML = state.battle.enemy.map(unitHtml).join('');
-            allyArea.innerHTML = state.battle.ally.map(unitHtml).join('');
-        }
+var html = &lt;div class="text-center mb-6 mt-2"&gt; &lt;h2 class="text-2xl font-bold text-emerald-400 drop-shadow mb-2"&gt;📖 영웅 도감&lt;/h2&gt; &lt;div class="w-full bg-slate-800 h-2 rounded-full overflow-hidden max-w-xs mx-auto border border-slate-700 mb-1"&gt; &lt;div class="bg-emerald-400 h-full" style="width: ${pct}%"></div>
+</div>
+<p class="text-[10px] text-slate-400">수집률: ${ownedCount} / ${totalCount}명 (${pct}%)&lt;/p&gt; &lt;/div&gt; &lt;div class="grid grid-cols-4 gap-3 pb-10">;
 
-        window.onload = function() {
-            updateUI();
-            switchTab('gacha');
-        };
-    </script>
+const order = {'UR':5, 'SSR':4, 'SR':3, 'R':2, 'N':1};
+var sortedDB = [...HERO_DB].sort((a,b) => order[b.grade] - order[a.grade] || a.id.localeCompare(b.id));
+
+sortedDB.forEach(h => {
+var isOwned = state.player.roster.some(r => r.id === h.id);
+var attrChar = attrMap[h.attr] || '無';
+
+html += &lt;div onclick="openCharModal('${h.id}')" class="flex flex-col items-center cursor-pointer transition-transform active:scale-95 ${isOwned ? '' : 'opacity-30 grayscale'}"&gt; &lt;div class="relative mb-1"&gt; &lt;img src="${getImgUrl(h.id)}" class="w-14 h-14 rounded-full border-2 ${isOwned ? 'border-sky-500' : 'border-slate-600'} bg-slate-800 shadow-md"&gt; &lt;span class="absolute -top-1 -right-1 text-[8px] attr-${attrChar} bg-black/80 px-1 rounded-full border border-slate-600">${attrChar}&lt;/span&gt; &lt;/div&gt; &lt;div class="text-[9px] mb-0.5 grade-${h.grade} border border-slate-700 px-1 rounded bg-slate-900">${h.grade}&lt;/div&gt; &lt;div class="text-[10px] font-bold text-center w-full truncate ${isOwned ? 'text-slate-300' : 'text-slate-500'}">${isOwned ? h.name : '미확인'}&lt;/div&gt; &lt;/div>;
+});
+html += </div>;
+container.innerHTML = html;
+}
+
+/* --- 4. 캐릭터 상세 정보 모달 (신규 구현) --- */
+function openCharModal(id) {
+var h = HERO_DB.find(x => x.id === id);
+if(!h) return;
+
+var isOwned = state.player.roster.some(r => r.id === h.id);
+var attrChar = attrMap[h.attr] || '無';
+var statTotal = h.stats.str + h.stats.int + h.stats.con + h.stats.spd;
+
+var html = &lt;div class="relative mb-4 mt-2"&gt; &lt;img src="${getImgUrl(h.id)}" class="w-24 h-24 rounded-full border-4 ${isOwned ? 'border-sky-400' : 'border-slate-600 grayscale'} bg-slate-900 shadow-xl"&gt; &lt;span class="absolute -bottom-2 right-0 text-sm attr-${attrChar} bg-black/80 px-2 py-0.5 rounded-full border border-slate-600">`${attrChar}</span>
+</div>
+
+<div class="text-center mb-4 w-full">
+<div class="flex justify-center items-center gap-2 mb-1">
+<span class="text-[10px] grade-{h.grade}</span>
+<span class="text-[10px] text-slate-400 border border-slate-600 px-2 rounded-full bg-slate-900">{isOwned ? 'text-white' : 'text-slate-500'} mb-1">{isOwned ? <div class="text-[10px] text-amber-400"&gt;총합 전투력: ${statTotal}</div>:<div class="text-[10px] text-slate-500">등용 시 정보가 개방됩니다.</div>`}
+</div>
+
+<div class="w-full bg-slate-900 rounded-xl p-3 mb-3 border border-slate-700 relative overflow-hidden">
+${!isOwned ? '&lt;div class="absolute inset-0 bg-slate-900/80 backdrop-blur-[2px] z-10 flex items-center justify-center text-sm font-bold text-slate-500 border border-slate-700"&gt;정보 잠김&lt;/div&gt;' : ''} &lt;div class="text-xs text-amber-400 mb-2 font-bold flex items-center gap-1"&gt;&lt;span&gt;📊&lt;/span&gt; 기초 스탯&lt;/div&gt; &lt;div class="grid grid-cols-2 gap-y-2 gap-x-4 text-xs"&gt; &lt;div class="flex items-center justify-between"&gt; &lt;span class="text-slate-400"&gt;무력&lt;/span&gt; &lt;div class="w-16 bg-slate-800 h-1.5 rounded overflow-hidden"&gt;&lt;div class="bg-red-400 h-full" style="width:${(h.stats.str/120)*100}%"></div></div>
+<span class="font-bold text-red-400 w-6 text-right">${h.stats.str}&lt;/span&gt; &lt;/div&gt; &lt;div class="flex items-center justify-between"&gt; &lt;span class="text-slate-400"&gt;지력&lt;/span&gt; &lt;div class="w-16 bg-slate-800 h-1.5 rounded overflow-hidden"&gt;&lt;div class="bg-blue-400 h-full" style="width:${(h.stats.int/120)*100}%"></div></div>
+<span class="font-bold text-blue-400 w-6 text-right">${h.stats.int}&lt;/span&gt; &lt;/div&gt; &lt;div class="flex items-center justify-between"&gt; &lt;span class="text-slate-400"&gt;통솔&lt;/span&gt; &lt;div class="w-16 bg-slate-800 h-1.5 rounded overflow-hidden"&gt;&lt;div class="bg-green-400 h-full" style="width:${(h.stats.con/120)*100}%"></div></div>
+<span class="font-bold text-green-400 w-6 text-right">${h.stats.con}&lt;/span&gt; &lt;/div&gt; &lt;div class="flex items-center justify-between"&gt; &lt;span class="text-slate-400"&gt;민첩&lt;/span&gt; &lt;div class="w-16 bg-slate-800 h-1.5 rounded overflow-hidden"&gt;&lt;div class="bg-sky-400 h-full" style="width:${(h.stats.spd/120)*100}%"></div></div>
+<span class="font-bold text-sky-400 w-6 text-right">`${h.stats.spd}</span>
+</div>
+</div>
+</div>
+
+<div class="w-full bg-slate-900 rounded-xl p-3 mb-3 border border-slate-700 relative">
+{h.skill.name}</span></div>
+<div class="text-[11px] text-slate-300 leading-relaxed pl-3 border-l-2 border-slate-600 mt-2">$`{h.skill.desc}</div>
+</div>
+
+<div class="w-full bg-slate-900 rounded-xl p-3 border border-slate-700 relative">
+${!isOwned ? '&lt;div class="absolute inset-0 bg-slate-900/80 backdrop-blur-[2px] z-10 flex items-center justify-center text-sm font-bold text-slate-500 border border-slate-700"&gt;정보 잠김&lt;/div&gt;' : ''} &lt;div class="text-xs text-amber-400 mb-1 font-bold flex items-center gap-1"&gt;&lt;span&gt;🔗&lt;/span&gt; 운명의 인연&lt;/div&gt; &lt;div class="text-[11px] text-slate-400 pl-3 border-l-2 border-slate-600 mt-2"&gt;${h.bonds || '인연 없음'}</div>
+</div>
+`;
+
+document.getElementById('char-modal-content').innerHTML = html;
+document.getElementById('modal-char-info').classList.remove('hidden');
+}
+
+function closeModal(id) { document.getElementById(id).classList.add('hidden'); }
+
+/* --- 5. 출정 (ATB 전투) --- */
+function initBattle(container) {
+var hasHero = state.player.party.some(id => id !== null);
+if (!hasHero) {
+container.innerHTML = '<div class="text-center pt-20 text-slate-400">출전할 무장이 없습니다.<br>막사에서 파티를 편성해주세요.</div>';
+return;
+}
+
+state.battle.logs = ["전투가 시작되었습니다!"];
+
+state.battle.ally = state.player.party.map((id, idx) => {
+if (!id) return null;
+var d = HERO_DB.find(h => h.id === id);
+return {...d, hp: d.stats.con * 50, maxHp: d.stats.con * 50, atb: 0, pos: idx, side: 'ally' };
+}).filter(u => u !== null);
+
+state.battle.enemy = [
+{ id: 'E1', name: '황건적 대장', grade: 'R', role: '맹장', attr: '지', stats: { str: 45, int: 20, con: 50, spd: 40 }, side: 'enemy' },
+{ id: 'E2', name: '황건적 졸개', grade: 'N', role: '맹장', attr: '지', stats: { str: 30, int: 10, con: 30, spd: 30 }, side: 'enemy' },
+{ id: 'E3', name: '황건적 졸개', grade: 'N', role: '맹장', attr: '지', stats: { str: 30, int: 10, con: 30, spd: 30 }, side: 'enemy' }
+ ].map(e => ({...e, hp: e.stats.con * 50, maxHp: e.stats.con * 50, atb: 0 }));
+
+renderBattleScreen(container);
+state.battle.timer = setInterval(battleTick, 100);
+}
+
+function battleTick() {
+var allUnits = state.battle.ally.concat(state.battle.enemy);
+var allyAlive = state.battle.ally.filter(u => u.hp > 0).length;
+var enemyAlive = state.battle.enemy.filter(u => u.hp > 0).length;
+
+if(allyAlive === 0 || enemyAlive === 0) {
+clearInterval(state.battle.timer);
+addLog(allyAlive === 0 ? "패배했습니다..." : "✨ 전투 승리! 전리품을 획득했습니다!");
+updateBattleUI();
+return;
+}
+
+allUnits.forEach(u => { if (u.hp > 0) u.atb += u.stats.spd * 0.5; });
+var activeUnit = allUnits.find(u => u.atb >= 1000);
+
+if (activeUnit) {
+executeTurn(activeUnit);
+activeUnit.atb = 0;
+}
+updateBattleUI();
+}
+
+function executeTurn(unit) {
+var targets = unit.side === 'ally' ? state.battle.enemy : state.battle.ally;
+var aliveTargets = targets.filter(t => t.hp > 0);
+if (aliveTargets.length === 0) return;
+
+var target = aliveTargets[Math.floor(Math.random() * aliveTargets.length)];
+
+var baseDmg = unit.stats.str * 5;
+var def = target.stats.con * 2;
+var miti = 100 / (100 + def);
+
+var attrBonus = 1.0;
+if ((unit.attr === '천' && target.attr === '지') || (unit.attr === '지' && target.attr === '인') || (unit.attr === '인' && target.attr === '천')) {
+attrBonus = 1.3;
+}
+
+var finalDmg = Math.floor(baseDmg * miti * attrBonus);
+finalDmg = Math.max(1, finalDmg);
+target.hp = Math.max(0, target.hp - finalDmg);
+
+var logStr = <span class='grade-${unit.grade} font-bold'>{target.name}에게 <span class='text-red-400 font-bold'>${finalDmg}&lt;/span&gt; 피해!;
+if(attrBonus > 1.0) logStr += " <span class='text-[9px] text-amber-400'>(상성 우위!)</span>";
+addLog(logStr);
+}
+
+function addLog(msg) {
+state.battle.logs.unshift(msg);
+if (state.battle.logs.length > 50) state.battle.logs.pop();
+var logEl = document.getElementById('battle-logs');
+if (logEl) {
+logEl.innerHTML = state.battle.logs.map((l, i) => {
+var opacity = i === 0 ? 'opacity-100 font-bold text-white' : (i < 3 ? 'opacity-80' : 'opacity-40 text-[10px]');
+return <div class="mb-1 pb-1 border-b border-slate-800/50${opacity}">${l}&lt;/div>;
+}).join('');
+}
+}
+
+function renderBattleScreen(container) {
+container.innerHTML =
+<div class="flex-1 flex flex-col p-2 h-full bg-[url('data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI0IiBoZWlnaHQ9IjQiPgo8cmVjdCB3aWR0aD0iNCIgaGVpZ2h0PSI0IiBmaWxsPSIjMGYxNzJhIj48L3JlY3Q+CjxyZWN0IHdpZHRoPSIxIiBoZWlnaHQ9IjEiIGZpbGw9IiMxZTI5M2IiPjwvcmVjdD4KPC9zdmc+')]"&gt; &lt;div id="enemy-area" class="flex justify-around items-end h-[35%] pb-2"&gt;&lt;/div&gt; &lt;div id="battle-logs" class="flex-1 bg-black/60 rounded-xl p-3 overflow-y-auto text-[11px] text-slate-300 border border-slate-700/50 shadow-inner my-2 custom-scrollbar"&gt;&lt;/div&gt; &lt;div id="ally-area" class="flex justify-around items-start h-[35%] pt-2"&gt;&lt;/div&gt; &lt;/div>;
+updateBattleUI();
+}
+
+function updateBattleUI() {
+var enemyArea = document.getElementById('enemy-area');
+var allyArea = document.getElementById('ally-area');
+if (!enemyArea || !allyArea) return;
+
+var unitHtml = (u) => {
+var isDead = u.hp <= 0;
+var hpPct = (u.hp / u.maxHp) * 100;
+var atbPct = Math.min(100, (u.atb / 1000) * 100);
+
+return &lt;div class="flex flex-col items-center w-[4.5rem] transition-opacity${isDead ? 'opacity-30 grayscale' : ''}">
+<div class="relative">
+<img src="{u.side==='ally'?'border-sky-500':'border-red-500'} bg-slate-900 shadow-lg mb-1">
+<span class="absolute -top-1 -right-1 text-[8px] attr-{attrMap[u.attr]}</span>
+</div>
+<div class="text-[9px] mb-1 font-bold grade-{u.name}</div>
+<div class="w-full bg-slate-900 h-1.5 rounded-full overflow-hidden mb-1 border border-slate-700">
+<div class="hp-bar {hpPct}%"></div>
+</div>
+<div class="w-full bg-slate-900 h-1 rounded-full overflow-hidden border border-slate-700">
+<div class="bg-sky-400 h-full" style="width: ${atbPct}%"></div>
+</div>
+</div>`;
+};
+
+enemyArea.innerHTML = state.battle.enemy.map(unitHtml).join('');
+allyArea.innerHTML = state.battle.ally.map(unitHtml).join('');
+}
+
+window.onload = function() {
+updateUI();
+switchTab('gacha');
+};
+</script>
 </body>
 </html>
