@@ -80,6 +80,11 @@ var state = {
   battle: { timer: null, logs: [], ally: [], enemy: [], isRunning: false }
   filters: { grade: 'ALL', role: 'ALL', attr: 'ALL' }
 };
+  
+function updateFilter(type, value) {
+  state.filters[type] = value;
+  renderBarracks(document.getElementById('main-content'));
+}
 
 var attrMap = { '천': '天', '지': '地', '인': '人' };
 
