@@ -5,6 +5,12 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <title>삼국지: 천기의 기록</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        window.onerror = function(msg, url, line) {
+            alert("🚨 시스템 에러: " + msg + "\n줄 번호: " + line);
+            return false;
+        };
+    </script>
     <style>
         .grade-UR { color: #f43f5e; text-shadow: 0 0 8px rgba(244,63,94,0.7); font-weight: 900; }
         .grade-SSR { color: #fbbf24; text-shadow: 0 0 6px rgba(251,191,36,0.6); }
@@ -35,7 +41,12 @@
         </div>
     </header>
 
-    <main id="main-content" class="flex-1 overflow-y-auto relative w-full flex flex-col"></main>
+    <main id="main-content" class="flex-1 overflow-y-auto relative w-full flex flex-col items-center justify-center p-4">
+        <button onclick="bootGame()" class="px-8 py-5 bg-blue-600 hover:bg-blue-500 text-white font-bold rounded-2xl shadow-[0_0_20px_rgba(37,99,235,0.5)] active:scale-95 transition-transform text-lg animate-pulse">
+            🚀 게임 엔진 강제 가동 (터치)
+        </button>
+        <p class="text-xs text-slate-500 mt-4">버튼을 눌러도 반응이 없다면 브라우저 캐시 문제입니다.</p>
+    </main>
 
     <footer class="bg-slate-800 flex justify-around p-2 border-t border-slate-700 shrink-0 text-[11px] font-bold pb-safe z-10 shadow-lg">
         <button onclick="switchTab('barracks')" id="tab-barracks" class="flex-1 py-3 text-center rounded hover:bg-slate-700 transition-colors">⛺ 막사</button>
@@ -63,13 +74,6 @@
     </div>
 
     <script>
-        // 에러 추적기 (에러 발생 시 화면에 빨간 글씨로 띄움)
-        window.onerror = function(msg, url, line) {
-            var main = document.getElementById('main-content');
-            if(main) main.innerHTML = '<div class="p-4 text-red-400 font-bold break-words mt-10 border border-red-500 bg-red-900/30 rounded">🚨 시스템 에러 발생:<br>' + msg + '<br>Line: ' + line + '</div>';
-            return false;
-        };
-
         var state = {
             activeTab: 'gacha',
             player: { resources: { skyStones: 5000, tacticsManuals: 0, legacyPoints: 0 }, roster: [], party: [null, null, null, null, null] },
@@ -79,9 +83,9 @@
         var attrMap = { '천': '天', '지': '地', '인': '人' };
 
         var HERO_DB = [
-            { id: 'H001', name: '유비', grade: 'UR', role: '군주', attr: '인', stats: { str: 60, int: 85, con: 80, spd: 65 }, skill: { name: '도원결의', desc: '아군 전체 체력/방어력 상승' }, bonds: '도원결의 (관우, 장비)' },
-            { id: 'H002', name: '관우', grade: 'UR', role: '맹장', attr: '천', stats: { str: 98, int: 75, con: 85, spd: 78 }, skill: { name: '청룡참', desc: '단일 적 치명적 피해 및 기절' }, bonds: '오호대장군' },
-            { id: 'H003', name: '장비', grade: 'UR', role: '호위', attr: '지', stats: { str: 97, int: 40, con: 95, spd: 70 }, skill: { name: '사자후', desc: '적 전체 확률적 기절 및 도발' }, bonds: '도원결의 (유비, 관우)' },
+            { id: 'H001', name: '유비', grade: 'UR', role: '군주', attr: '인', stats: { str: 60, int: 85, con: 80, spd: 65 }, skill: { name: '도원결의', desc: '아군 전체 체력/방어력 상승' }, bonds: '도원결의 (관우, 장비 보유시 방어 15% 증가)' },
+            { id: 'H002', name: '관우', grade: 'UR', role: '맹장', attr: '천', stats: { str: 98, int: 75, con: 85, spd: 78 }, skill: { name: '청룡참', desc: '단일 적 치명적 피해 및 기절' }, bonds: '오호대장군 (공격력 20% 증가)' },
+            { id: 'H003', name: '장비', grade: 'UR', role: '호위', attr: '지', stats: { str: 97, int: 40, con: 95, spd: 70 }, skill: { name: '사자후', desc: '적 전체 확률적 기절 및 도발' }, bonds: '도원결의' },
             { id: 'H004', name: '조운', grade: 'UR', role: '맹장', attr: '인', stats: { str: 96, int: 70, con: 85, spd: 92 }, skill: { name: '일신시담', desc: '민첩 50% 상승 및 2회 공격' }, bonds: '오호대장군' },
             { id: 'H005', name: '여포', grade: 'UR', role: '맹장', attr: '천', stats: { str: 100, int: 30, con: 90, spd: 85 }, skill: { name: '무쌍난무', desc: '광역 방어구 관통 피해' }, bonds: '인중여포' },
             { id: 'H006', name: '제갈량', grade: 'UR', role: '모사', attr: '천', stats: { str: 20, int: 100, con: 60, spd: 80 }, skill: { name: '동남풍', desc: '광역 화속성 피해 및 민첩 감소' }, bonds: '와룡봉추' },
@@ -93,7 +97,16 @@
             { id: 'H012', name: '민병대', grade: 'N', role: '호위', attr: '인', stats: { str: 20, int: 10, con: 40, spd: 25 }, skill: { name: '방패막기', desc: '자신 방어력 소폭 상승' }, bonds: '농민의 분노' }
         ];
 
-        function getImgUrl(seed) { return 'https://api.dicebear.com/9.x/adventurer/svg?seed=' + seed + '&backgroundColor=0f172a'; }
+        function getImgUrl(seed) { return `https://api.dicebear.com/9.x/adventurer/svg?seed=${seed}&backgroundColor=0f172a`; }
+
+        function bootGame() {
+            try {
+                updateUI();
+                switchTab('gacha');
+            } catch(e) {
+                alert("엔진 가동 실패: " + e.message);
+            }
+        }
 
         function updateUI() {
             document.getElementById('ui-skystone').innerText = state.player.resources.skyStones.toLocaleString();
@@ -105,12 +118,11 @@
             state.activeTab = tab;
             if(state.battle.timer) clearInterval(state.battle.timer);
             
-            var tabs = ['barracks', 'battle', 'gacha', 'codex', 'legacy'];
-            for(var i=0; i<tabs.length; i++) {
-                var btn = document.getElementById('tab-' + tabs[i]);
+            ['barracks', 'battle', 'gacha', 'codex', 'legacy'].forEach(t => {
+                let btn = document.getElementById('tab-' + t);
                 if(btn) btn.classList.remove('bg-slate-700');
-            }
-            var activeBtn = document.getElementById('tab-' + tab);
+            });
+            let activeBtn = document.getElementById('tab-' + tab);
             if(activeBtn) activeBtn.classList.add('bg-slate-700');
 
             var main = document.getElementById('main-content');
@@ -125,15 +137,15 @@
         }
 
         function renderGacha(container) {
-            container.innerHTML = 
-                '<div class="text-center mt-6 mb-8">' +
-                    '<h2 class="text-3xl font-bold text-blue-400 mb-2 drop-shadow-md">🏮 천기 등용문</h2>' +
-                    '<p class="text-xs text-slate-400">0.05%의 기적, 신화 무장을 소환하세요.</p>' +
-                '</div>' +
-                '<div class="flex flex-col gap-5 max-w-xs mx-auto mt-10">' +
-                    '<button onclick="doGacha(1)" class="w-full py-4 bg-slate-800 border-2 border-blue-500/30 rounded-xl font-bold text-white shadow-lg active:scale-95 transition-transform">1회 소환 <span class="text-sky-300 text-xs ml-2">💠 100</span></button>' +
-                    '<button onclick="doGacha(10)" class="w-full py-5 bg-slate-800 border-2 border-amber-500/50 rounded-xl font-bold text-lg text-white shadow-[0_0_15px_rgba(245,158,11,0.2)] active:scale-95 transition-transform">10회 소환 <span class="text-amber-300 text-sm ml-2">💠 1,000</span></button>' +
-                '</div>';
+            container.innerHTML = `
+                <div class="text-center mt-6 mb-8">
+                    <h2 class="text-3xl font-bold text-blue-400 mb-2 drop-shadow-md">🏮 천기 등용문</h2>
+                    <p class="text-xs text-slate-400">0.05%의 기적, 신화 무장을 소환하세요.</p>
+                </div>
+                <div class="flex flex-col gap-5 max-w-xs mx-auto mt-10">
+                    <button onclick="doGacha(1)" class="w-full py-4 bg-slate-800 border-2 border-blue-500/30 rounded-xl font-bold text-white shadow-lg active:scale-95 transition-transform">1회 소환 <span class="text-sky-300 text-xs ml-2">💠 100</span></button>
+                    <button onclick="doGacha(10)" class="w-full py-5 bg-slate-800 border-2 border-amber-500/50 rounded-xl font-bold text-lg text-white shadow-[0_0_15px_rgba(245,158,11,0.2)] active:scale-95 transition-transform">10회 소환 <span class="text-amber-300 text-sm ml-2">💠 1,000</span></button>
+                </div>`;
         }
 
         function doGacha(times) {
@@ -150,21 +162,20 @@
                 if(grade === 'UR') highestGrade = 'UR';
                 else if(grade === 'SSR' && highestGrade !== 'UR') highestGrade = 'SSR';
 
-                var pool = HERO_DB.filter(function(h) { return h.grade === grade; });
-                if(pool.length === 0) pool = HERO_DB.filter(function(h) { return h.grade === 'N'; });
+                var pool = HERO_DB.filter(h => h.grade === grade);
+                if(pool.length === 0) pool = HERO_DB.filter(h => h.grade === 'N');
                 var hero = pool[Math.floor(Math.random() * pool.length)];
                 
-                var existing = state.player.roster.find(function(r) { return r.id === hero.id; });
+                var existing = state.player.roster.find(r => r.id === hero.id);
                 if(existing) { 
                     existing.count++; 
-                    results.push(Object.assign({}, hero, {isDup: true})); 
+                    results.push({...hero, isDup: true}); 
                 } else { 
                     state.player.roster.push({id: hero.id, count: 1}); 
-                    results.push(Object.assign({}, hero, {isDup: false})); 
+                    results.push({...hero, isDup: false}); 
                 }
             }
             updateUI();
-            
             if(highestGrade === 'UR' || highestGrade === 'SSR') playGachaFX(highestGrade, results);
             else showGachaResults(results);
         }
@@ -173,7 +184,6 @@
             var fxScreen = document.getElementById('gacha-fx');
             var fxText = document.getElementById('fx-text');
             fxScreen.classList.remove('hidden');
-
             if(grade === 'UR') {
                 fxScreen.className = 'fixed inset-0 z-[60] flex flex-col items-center justify-center pointer-events-none fx-ur';
                 fxText.innerHTML = '<span class="text-red-500 drop-shadow-[0_0_20px_#ef4444] text-4xl font-black">천기가 요동칩니다...!!</span>';
@@ -181,8 +191,7 @@
                 fxScreen.className = 'fixed inset-0 z-[60] flex flex-col items-center justify-center pointer-events-none fx-ssr';
                 fxText.innerHTML = '<span class="text-amber-400 drop-shadow-[0_0_15px_#f59e0b] text-3xl font-bold">영웅의 기운이 느껴집니다!</span>';
             }
-
-            setTimeout(function() {
+            setTimeout(() => {
                 fxScreen.classList.add('hidden');
                 showGachaResults(results);
             }, 2500);
@@ -190,15 +199,18 @@
 
         function showGachaResults(results) {
             var html = '';
-            results.forEach(function(r) {
+            results.forEach(r => {
                 var border = r.grade === 'UR' ? 'border-red-500 bg-red-900/30' : (r.grade === 'SSR' ? 'border-amber-500 bg-amber-900/30' : 'border-slate-700 bg-slate-800');
                 var txt = r.isDup ? '<div class="text-[9px] mt-1 text-amber-400 font-bold">✨ 돌파 조각</div>' : '<div class="text-[10px] mt-1 text-green-400 font-bold">NEW!</div>';
                 var attrChar = attrMap[r.attr] || '無';
-                html += '<div class="border ' + border + ' p-3 rounded-xl text-center shadow-lg relative overflow-hidden flex flex-col items-center">' +
-                        '<span class="absolute top-1 left-1 text-[10px] bg-black/50 px-1 rounded attr-' + attrChar + '">' + attrChar + '</span>' +
-                        '<div class="text-[10px] text-slate-400 mb-1 absolute top-1 right-1">' + r.grade + '</div>' +
-                        '<img src="' + getImgUrl(r.id) + '" class="w-14 h-14 rounded-full border border-slate-600 mb-2 mt-2 bg-slate-900 shadow-inner">' +
-                        '<div class="font-bold text-sm grade-' + r.grade + '">' + r.name + '</div>' + txt + '</div>';
+                html += `
+                    <div class="border ${border} p-3 rounded-xl text-center shadow-lg relative overflow-hidden flex flex-col items-center">
+                        <span class="absolute top-1 left-1 text-[10px] bg-black/50 px-1 rounded attr-${attrChar}">${attrChar}</span>
+                        <div class="text-[10px] text-slate-400 mb-1 absolute top-1 right-1">${r.grade}</div>
+                        <img src="${getImgUrl(r.id)}" class="w-14 h-14 rounded-full border border-slate-600 mb-2 mt-2 bg-slate-900 shadow-inner">
+                        <div class="font-bold text-sm grade-${r.grade}">${r.name}</div>
+                        ${txt}
+                    </div>`;
             });
             document.getElementById('gacha-result-list').innerHTML = html;
             document.getElementById('modal-gacha').classList.remove('hidden');
@@ -208,38 +220,39 @@
             var html = '<div class="text-center mb-4 font-bold text-amber-400 drop-shadow">전술 진형 편성 (터치하여 해제)</div><div class="flex gap-2 mb-6 justify-center w-full max-w-sm mx-auto">';
             for(var i=0; i<5; i++) {
                 var id = state.player.party[i];
-                var h = id ? HERO_DB.find(function(x) { return x.id === id; }) : null;
+                var h = id ? HERO_DB.find(x => x.id === id) : null;
                 var style = h ? 'border-sky-500 bg-slate-800 shadow-[0_0_8px_rgba(14,165,233,0.3)]' : 'border-slate-700 bg-slate-900 border-dashed opacity-60';
-                
-                html += '<div onclick="removeFromParty(' + i + ')" class="w-[70px] h-[90px] border-2 ' + style + ' rounded-lg flex flex-col items-center justify-center cursor-pointer relative overflow-hidden p-1">';
+                html += `<div onclick="removeFromParty(${i})" class="w-[70px] h-[90px] border-2 ${style} rounded-lg flex flex-col items-center justify-center cursor-pointer relative overflow-hidden p-1">`;
                 if(h) {
-                    html += '<img src="' + getImgUrl(h.id) + '" class="w-8 h-8 rounded-full mb-1"><span class="text-[11px] font-bold grade-' + h.grade + ' leading-tight">' + h.name + '</span><span class="text-[10px] attr-' + attrMap[h.attr] + ' mt-1 font-black">' + attrMap[h.attr] + '</span>';
+                    html += `<img src="${getImgUrl(h.id)}" class="w-8 h-8 rounded-full mb-1"><span class="text-[11px] font-bold grade-${h.grade} leading-tight">${h.name}</span><span class="text-[10px] attr-${attrMap[h.attr]} mt-1 font-black">${attrMap[h.attr]}</span>`;
                 } else {
-                    html += '<span class="text-[10px] text-slate-500">비어있음</span>';
+                    html += `<span class="text-[10px] text-slate-500">비어있음</span>`;
                 }
                 html += '</div>';
             }
-            
             html += '</div><div class="text-xs font-bold mb-2 border-b border-slate-700 pb-1 text-slate-300">보유 무장 <span class="font-normal text-[10px] text-slate-500">(좌측 클릭 시 상세정보)</span></div><div class="flex-1 overflow-y-auto space-y-2 pb-10">';
             
             if(state.player.roster.length === 0) {
                 html += '<div class="text-center text-slate-500 py-6 text-[11px] bg-slate-800/50 rounded-lg">보유한 무장이 없습니다.</div>';
             } else {
-                state.player.roster.forEach(function(r) {
-                    var d = HERO_DB.find(function(x) { return x.id === r.id; });
-                    var inP = state.player.party.indexOf(d.id) !== -1;
+                state.player.roster.forEach(r => {
+                    var d = HERO_DB.find(x => x.id === r.id);
+                    var inP = state.player.party.includes(d.id);
                     var bStyle = inP ? 'border-slate-700 opacity-50' : 'border-slate-600 bg-slate-800 active:bg-slate-700';
-                    var statStr = '무' + d.stats.str + ' 지' + d.stats.int + ' 통' + d.stats.con + ' 속' + d.stats.spd;
+                    var statStr = `무${d.stats.str} 지${d.stats.int} 통${d.stats.con} 속${d.stats.spd}`;
                     var attrChar = attrMap[d.attr];
-                    
-                    html += '<div class="p-3 rounded-lg border ' + bStyle + ' flex justify-between items-center transition-all">' +
-                            '<div class="flex items-center gap-3 cursor-pointer" onclick="openCharModal(\'' + d.id + '\')">' +
-                            '<img src="' + getImgUrl(d.id) + '" class="w-12 h-12 rounded-lg border border-slate-600 bg-slate-900 shadow-md">' +
-                            '<div><div class="grade-' + d.grade + ' font-bold text-base mb-1">' + d.name + ' <span class="attr-' + attrChar + ' text-[12px] ml-1">(' + attrChar + ')</span></div>' +
-                            '<div class="text-[10px] text-slate-400">' + statStr + '</div></div></div>' +
-                            '<div class="flex flex-col items-end gap-1">' +
-                            '<button onclick="' + (inP ? 'removeFromPartyByHero(\'' + d.id + '\')' : 'addToParty(\'' + d.id + '\')') + '" class="text-[10px] font-bold ' + (inP ? 'text-slate-400 bg-slate-700 px-3 py-1.5 rounded border border-slate-600' : 'text-amber-400 bg-amber-900/30 px-3 py-1.5 rounded border border-amber-500/50 active:scale-95') + '">' + (inP ? '해제' : '배치') + '</button>' +
-                            '<div class="text-[9px] text-slate-500 mt-1">x' + r.count + ' 돌파</div></div></div>';
+                    html += `
+                        <div class="p-3 rounded-lg border ${bStyle} flex justify-between items-center transition-all">
+                            <div class="flex items-center gap-3 cursor-pointer" onclick="openCharModal('${d.id}')">
+                                <img src="${getImgUrl(d.id)}" class="w-12 h-12 rounded-lg border border-slate-600 bg-slate-900 shadow-md">
+                                <div><div class="grade-${d.grade} font-bold text-base mb-1">${d.name} <span class="attr-${attrChar} text-[12px] ml-1">(${attrChar})</span></div>
+                                <div class="text-[10px] text-slate-400">${statStr}</div></div>
+                            </div>
+                            <div class="flex flex-col items-end gap-1">
+                                <button onclick="${inP ? `removeFromPartyByHero('${d.id}')` : `addToParty('${d.id}')`}" class="text-[10px] font-bold ${inP ? 'text-slate-400 bg-slate-700 px-3 py-1.5 rounded border border-slate-600' : 'text-amber-400 bg-amber-900/30 px-3 py-1.5 rounded border border-amber-500/50 active:scale-95'}">${inP ? '해제' : '배치'}</button>
+                                <div class="text-[9px] text-slate-500 mt-1">x${r.count} 돌파</div>
+                            </div>
+                        </div>`;
                 });
             }
             container.innerHTML = html + '</div>';
@@ -260,57 +273,59 @@
             var ownedCount = state.player.roster.length;
             var totalCount = HERO_DB.length;
             var pct = Math.floor((ownedCount / totalCount) * 100);
-
-            var html = '<div class="text-center mb-6 mt-2"><h2 class="text-2xl font-bold text-emerald-400 drop-shadow mb-2">📖 영웅 도감</h2>' +
-                       '<div class="w-full bg-slate-800 h-2 rounded-full overflow-hidden max-w-xs mx-auto border border-slate-700 mb-1"><div class="bg-emerald-400 h-full" style="width: ' + pct + '%"></div></div>' +
-                       '<p class="text-[10px] text-slate-400">수집률: ' + ownedCount + ' / ' + totalCount + '명 (' + pct + '%)</p></div>' +
-                       '<div class="grid grid-cols-4 gap-3 pb-10">';
+            var html = `
+                <div class="text-center mb-6 mt-2"><h2 class="text-2xl font-bold text-emerald-400 drop-shadow mb-2">📖 영웅 도감</h2>
+                <div class="w-full bg-slate-800 h-2 rounded-full overflow-hidden max-w-xs mx-auto border border-slate-700 mb-1"><div class="bg-emerald-400 h-full" style="width: ${pct}%"></div></div>
+                <p class="text-[10px] text-slate-400">수집률: ${ownedCount} / ${totalCount}명 (${pct}%)</p></div>
+                <div class="grid grid-cols-4 gap-3 pb-10">`;
 
             var order = {'UR':5, 'SSR':4, 'SR':3, 'R':2, 'N':1};
-            var sortedDB = HERO_DB.slice().sort(function(a,b) { return (order[b.grade]||0) - (order[a.grade]||0) || a.id.localeCompare(b.id); });
+            var sortedDB = [...HERO_DB].sort((a,b) => (order[b.grade]||0) - (order[a.grade]||0) || a.id.localeCompare(b.id));
 
-            sortedDB.forEach(function(h) {
-                var isOwned = state.player.roster.some(function(r) { return r.id === h.id; });
+            sortedDB.forEach(h => {
+                var isOwned = state.player.roster.some(r => r.id === h.id);
                 var attrChar = attrMap[h.attr] || '無';
-                html += '<div onclick="openCharModal(\'' + h.id + '\')" class="flex flex-col items-center cursor-pointer transition-transform active:scale-95 ' + (isOwned ? '' : 'opacity-30 grayscale') + '">' +
-                        '<div class="relative mb-1"><img src="' + getImgUrl(h.id) + '" class="w-14 h-14 rounded-full border-2 ' + (isOwned ? 'border-sky-500' : 'border-slate-600') + ' bg-slate-800 shadow-md">' +
-                        '<span class="absolute -top-1 -right-1 text-[8px] attr-' + attrChar + ' bg-black/80 px-1 rounded-full border border-slate-600">' + attrChar + '</span></div>' +
-                        '<div class="text-[9px] mb-0.5 grade-' + h.grade + ' border border-slate-700 px-1 rounded bg-slate-900">' + h.grade + '</div>' +
-                        '<div class="text-[10px] font-bold text-center w-full truncate ' + (isOwned ? 'text-slate-300' : 'text-slate-500') + '">' + (isOwned ? h.name : '미확인') + '</div></div>';
+                html += `
+                    <div onclick="openCharModal('${h.id}')" class="flex flex-col items-center cursor-pointer transition-transform active:scale-95 ${isOwned ? '' : 'opacity-30 grayscale'}">
+                        <div class="relative mb-1"><img src="${getImgUrl(h.id)}" class="w-14 h-14 rounded-full border-2 ${isOwned ? 'border-sky-500' : 'border-slate-600'} bg-slate-800 shadow-md">
+                        <span class="absolute -top-1 -right-1 text-[8px] attr-${attrChar} bg-black/80 px-1 rounded-full border border-slate-600">${attrChar}</span></div>
+                        <div class="text-[9px] mb-0.5 grade-${h.grade} border border-slate-700 px-1 rounded bg-slate-900">${h.grade}</div>
+                        <div class="text-[10px] font-bold text-center w-full truncate ${isOwned ? 'text-slate-300' : 'text-slate-500'}">${isOwned ? h.name : '미확인'}</div>
+                    </div>`;
             });
             container.innerHTML = html + '</div>';
         }
 
         function openCharModal(id) {
-            var h = HERO_DB.find(function(x) { return x.id === id; });
+            var h = HERO_DB.find(x => x.id === id);
             if(!h) return;
-            
-            var isOwned = state.player.roster.some(function(r) { return r.id === h.id; });
+            var isOwned = state.player.roster.some(r => r.id === h.id);
             var attrChar = attrMap[h.attr] || '無';
             var statTotal = h.stats.str + h.stats.int + h.stats.con + h.stats.spd;
             var lockedDiv = '<div class="absolute inset-0 bg-slate-900/80 backdrop-blur-[2px] z-10 flex items-center justify-center text-sm font-bold text-slate-500 border border-slate-700">정보 잠김</div>';
             
-            var html = '<div class="relative mb-4 mt-2"><img src="' + getImgUrl(h.id) + '" class="w-24 h-24 rounded-full border-4 ' + (isOwned ? 'border-sky-400' : 'border-slate-600 grayscale') + ' bg-slate-900 shadow-xl">' +
-                       '<span class="absolute -bottom-2 right-0 text-sm attr-' + attrChar + ' bg-black/80 px-2 py-0.5 rounded-full border border-slate-600">' + attrChar + '</span></div>' +
-                       '<div class="text-center mb-4 w-full"><div class="flex justify-center items-center gap-2 mb-1"><span class="text-[10px] grade-' + h.grade + ' border border-slate-600 px-2 rounded-full bg-slate-900">' + h.grade + '</span>' +
-                       '<span class="text-[10px] text-slate-400 border border-slate-600 px-2 rounded-full bg-slate-900">' + h.role + '</span></div>' +
-                       '<div class="text-2xl font-bold ' + (isOwned ? 'text-white' : 'text-slate-500') + ' mb-1">' + (isOwned ? h.name : '미확인 무장') + '</div>' +
-                       (isOwned ? '<div class="text-[10px] text-amber-400">총합 전투력: ' + statTotal + '</div>' : '<div class="text-[10px] text-slate-500">등용 시 정보가 개방됩니다.</div>') + '</div>' +
-                       
-                       '<div class="w-full bg-slate-900 rounded-xl p-3 mb-3 border border-slate-700 relative overflow-hidden">' + (!isOwned ? lockedDiv : '') +
-                       '<div class="text-xs text-amber-400 mb-2 font-bold flex items-center gap-1"><span>📊</span> 기초 스탯</div><div class="grid grid-cols-2 gap-y-2 gap-x-4 text-xs">' +
-                       '<div class="flex items-center justify-between"><span class="text-slate-400">무력</span><div class="w-16 bg-slate-800 h-1.5 rounded overflow-hidden"><div class="bg-red-400 h-full" style="width:' + ((h.stats.str/120)*100) + '%"></div></div><span class="font-bold text-red-400 w-6 text-right">' + h.stats.str + '</span></div>' +
-                       '<div class="flex items-center justify-between"><span class="text-slate-400">지력</span><div class="w-16 bg-slate-800 h-1.5 rounded overflow-hidden"><div class="bg-blue-400 h-full" style="width:' + ((h.stats.int/120)*100) + '%"></div></div><span class="font-bold text-blue-400 w-6 text-right">' + h.stats.int + '</span></div>' +
-                       '<div class="flex items-center justify-between"><span class="text-slate-400">통솔</span><div class="w-16 bg-slate-800 h-1.5 rounded overflow-hidden"><div class="bg-green-400 h-full" style="width:' + ((h.stats.con/120)*100) + '%"></div></div><span class="font-bold text-green-400 w-6 text-right">' + h.stats.con + '</span></div>' +
-                       '<div class="flex items-center justify-between"><span class="text-slate-400">민첩</span><div class="w-16 bg-slate-800 h-1.5 rounded overflow-hidden"><div class="bg-sky-400 h-full" style="width:' + ((h.stats.spd/120)*100) + '%"></div></div><span class="font-bold text-sky-400 w-6 text-right">' + h.stats.spd + '</span></div></div></div>' +
+            var html = `
+                <div class="relative mb-4 mt-2"><img src="${getImgUrl(h.id)}" class="w-24 h-24 rounded-full border-4 ${isOwned ? 'border-sky-400' : 'border-slate-600 grayscale'} bg-slate-900 shadow-xl">
+                <span class="absolute -bottom-2 right-0 text-sm attr-${attrChar} bg-black/80 px-2 py-0.5 rounded-full border border-slate-600">${attrChar}</span></div>
+                <div class="text-center mb-4 w-full"><div class="flex justify-center items-center gap-2 mb-1"><span class="text-[10px] grade-${h.grade} border border-slate-600 px-2 rounded-full bg-slate-900">${h.grade}</span>
+                <span class="text-[10px] text-slate-400 border border-slate-600 px-2 rounded-full bg-slate-900">${h.role}</span></div>
+                <div class="text-2xl font-bold ${isOwned ? 'text-white' : 'text-slate-500'} mb-1">${isOwned ? h.name : '미확인 무장'}</div>
+                ${isOwned ? `<div class="text-[10px] text-amber-400">총합 전투력: ${statTotal}</div>` : '<div class="text-[10px] text-slate-500">등용 시 정보가 개방됩니다.</div>'}</div>
+                
+                <div class="w-full bg-slate-900 rounded-xl p-3 mb-3 border border-slate-700 relative overflow-hidden">${!isOwned ? lockedDiv : ''}
+                <div class="text-xs text-amber-400 mb-2 font-bold flex items-center gap-1"><span>📊</span> 기초 스탯</div><div class="grid grid-cols-2 gap-y-2 gap-x-4 text-xs">
+                <div class="flex items-center justify-between"><span class="text-slate-400">무력</span><div class="w-16 bg-slate-800 h-1.5 rounded overflow-hidden"><div class="bg-red-400 h-full" style="width:${(h.stats.str/120)*100}%"></div></div><span class="font-bold text-red-400 w-6 text-right">${h.stats.str}</span></div>
+                <div class="flex items-center justify-between"><span class="text-slate-400">지력</span><div class="w-16 bg-slate-800 h-1.5 rounded overflow-hidden"><div class="bg-blue-400 h-full" style="width:${(h.stats.int/120)*100}%"></div></div><span class="font-bold text-blue-400 w-6 text-right">${h.stats.int}</span></div>
+                <div class="flex items-center justify-between"><span class="text-slate-400">통솔</span><div class="w-16 bg-slate-800 h-1.5 rounded overflow-hidden"><div class="bg-green-400 h-full" style="width:${(h.stats.con/120)*100}%"></div></div><span class="font-bold text-green-400 w-6 text-right">${h.stats.con}</span></div>
+                <div class="flex items-center justify-between"><span class="text-slate-400">민첩</span><div class="w-16 bg-slate-800 h-1.5 rounded overflow-hidden"><div class="bg-sky-400 h-full" style="width:${(h.stats.spd/120)*100}%"></div></div><span class="font-bold text-sky-400 w-6 text-right">${h.stats.spd}</span></div></div></div>
 
-                       '<div class="w-full bg-slate-900 rounded-xl p-3 mb-3 border border-slate-700 relative">' + (!isOwned ? lockedDiv : '') +
-                       '<div class="text-xs text-amber-400 mb-1 font-bold flex items-center gap-1"><span>⚔️</span> 고유 스킬: <span class="text-white">' + (h.skill ? h.skill.name : '없음') + '</span></div>' +
-                       '<div class="text-[11px] text-slate-300 leading-relaxed pl-3 border-l-2 border-slate-600 mt-2">' + (h.skill ? h.skill.desc : '-') + '</div></div>' +
+                <div class="w-full bg-slate-900 rounded-xl p-3 mb-3 border border-slate-700 relative">${!isOwned ? lockedDiv : ''}
+                <div class="text-xs text-amber-400 mb-1 font-bold flex items-center gap-1"><span>⚔️</span> 고유 스킬: <span class="text-white">${h.skill ? h.skill.name : '없음'}</span></div>
+                <div class="text-[11px] text-slate-300 leading-relaxed pl-3 border-l-2 border-slate-600 mt-2">${h.skill ? h.skill.desc : '-'}</div></div>
 
-                       '<div class="w-full bg-slate-900 rounded-xl p-3 border border-slate-700 relative">' + (!isOwned ? lockedDiv : '') +
-                       '<div class="text-xs text-amber-400 mb-1 font-bold flex items-center gap-1"><span>🔗</span> 운명의 인연</div>' +
-                       '<div class="text-[11px] text-slate-400 pl-3 border-l-2 border-slate-600 mt-2">' + (h.bonds || '인연 없음') + '</div></div>';
+                <div class="w-full bg-slate-900 rounded-xl p-3 border border-slate-700 relative">${!isOwned ? lockedDiv : ''}
+                <div class="text-xs text-amber-400 mb-1 font-bold flex items-center gap-1"><span>🔗</span> 운명의 인연</div>
+                <div class="text-[11px] text-slate-400 pl-3 border-l-2 border-slate-600 mt-2">${h.bonds || '인연 없음'}</div></div>`;
             
             document.getElementById('char-modal-content').innerHTML = html;
             document.getElementById('modal-char-info').classList.remove('hidden');
@@ -318,10 +333,82 @@
 
         function closeModal(id) { document.getElementById(id).classList.add('hidden'); }
 
-        window.onload = function() {
-            updateUI();
-            switchTab('gacha');
-        };
+        function initBattle(container) {
+            var hasHero = state.player.party.some(id => id !== null);
+            if (!hasHero) { container.innerHTML = '<div class="text-center pt-20 text-slate-400">출전할 무장이 없습니다.<br>막사에서 파티를 편성해주세요.</div>'; return; }
+            state.battle.logs = ["전투가 시작되었습니다!"];
+            state.battle.ally = state.player.party.map((id, idx) => {
+                if (!id) return null;
+                var d = HERO_DB.find(h => h.id === id);
+                return {...d, hp: d.stats.con * 50, maxHp: d.stats.con * 50, atb: 0, pos: idx, side: 'ally' };
+            }).filter(u => u !== null);
+
+            state.battle.enemy = [
+                { id: 'E1', name: '황건적 대장', grade: 'R', role: '맹장', attr: '지', stats: { str: 45, int: 20, con: 50, spd: 40 }, side: 'enemy' },
+                { id: 'E2', name: '황건적 졸개', grade: 'N', role: '맹장', attr: '지', stats: { str: 30, int: 10, con: 30, spd: 30 }, side: 'enemy' }
+            ].map(e => ({...e, hp: e.stats.con * 50, maxHp: e.stats.con * 50, atb: 0 }));
+
+            renderBattleScreen(container);
+            state.battle.timer = setInterval(battleTick, 100);
+        }
+
+        function battleTick() {
+            var allUnits = state.battle.ally.concat(state.battle.enemy);
+            var allyAlive = state.battle.ally.filter(u => u.hp > 0).length;
+            var enemyAlive = state.battle.enemy.filter(u => u.hp > 0).length;
+            if(allyAlive === 0 || enemyAlive === 0) {
+                clearInterval(state.battle.timer);
+                addLog(allyAlive === 0 ? "패배했습니다..." : "✨ 전투 승리! 전리품을 획득했습니다!");
+                updateBattleUI(); return;
+            }
+            allUnits.forEach(u => { if (u.hp > 0) u.atb += u.stats.spd * 0.5; });
+            var activeUnit = allUnits.find(u => u.atb >= 1000);
+            if (activeUnit) { executeTurn(activeUnit); activeUnit.atb = 0; }
+            updateBattleUI();
+        }
+
+        function executeTurn(unit) {
+            var targets = unit.side === 'ally' ? state.battle.enemy : state.battle.ally;
+            var aliveTargets = targets.filter(t => t.hp > 0);
+            if (aliveTargets.length === 0) return;
+            var target = aliveTargets[Math.floor(Math.random() * aliveTargets.length)];
+            var baseDmg = unit.stats.str * 5;
+            var miti = 100 / (100 + (target.stats.con * 2));
+            var attrBonus = 1.0;
+            if ((unit.attr === '천' && target.attr === '지') || (unit.attr === '지' && target.attr === '인') || (unit.attr === '인' && target.attr === '천')) attrBonus = 1.3;
+            var finalDmg = Math.max(1, Math.floor(baseDmg * miti * attrBonus));
+            target.hp = Math.max(0, target.hp - finalDmg);
+            addLog(`<span class='grade-${unit.grade} font-bold'>${unit.name}</span>의 타격! ${target.name}에게 <span class='text-red-400 font-bold'>${finalDmg}</span> 피해!` + (attrBonus > 1.0 ? " <span class='text-[9px] text-amber-400'>(상성 우위!)</span>" : ""));
+        }
+
+        function addLog(msg) {
+            state.battle.logs.unshift(msg);
+            if (state.battle.logs.length > 50) state.battle.logs.pop();
+            var logEl = document.getElementById('battle-logs');
+            if (logEl) logEl.innerHTML = state.battle.logs.map((l, i) => `<div class="mb-1 pb-1 border-b border-slate-800/50 ${i===0?'opacity-100 font-bold text-white':(i<3?'opacity-80':'opacity-40 text-[10px]')}">${l}</div>`).join('');
+        }
+
+        function renderBattleScreen(container) {
+            container.innerHTML = `<div class="flex-1 flex flex-col p-2 h-full"><div id="enemy-area" class="flex justify-around items-end h-[35%] pb-2"></div><div id="battle-logs" class="flex-1 bg-black/60 rounded-xl p-3 overflow-y-auto text-[11px] text-slate-300 border border-slate-700/50 shadow-inner my-2 custom-scrollbar"></div><div id="ally-area" class="flex justify-around items-start h-[35%] pt-2"></div></div>`;
+            updateBattleUI();
+        }
+
+        function updateBattleUI() {
+            var enemyArea = document.getElementById('enemy-area');
+            var allyArea = document.getElementById('ally-area');
+            if (!enemyArea || !allyArea) return;
+            var unitHtml = (u) => {
+                var isDead = u.hp <= 0;
+                return `<div class="flex flex-col items-center w-[4.5rem] transition-opacity ${isDead ? 'opacity-30 grayscale' : ''}">
+                    <div class="relative"><img src="${getImgUrl(u.id)}" class="w-10 h-10 rounded-full border-2 ${u.side==='ally'?'border-sky-500':'border-red-500'} bg-slate-900 shadow-lg mb-1"><span class="absolute -top-1 -right-1 text-[8px] attr-${attrMap[u.attr]} bg-black/80 px-1 rounded-full border border-slate-600">${attrMap[u.attr]}</span></div>
+                    <div class="text-[9px] mb-1 font-bold grade-${u.grade} truncate w-full text-center">${u.name}</div>
+                    <div class="w-full bg-slate-900 h-1.5 rounded-full overflow-hidden mb-1 border border-slate-700"><div class="hp-bar ${u.side==='ally'?'bg-green-500':'bg-red-500'} h-full" style="width: ${(u.hp / u.maxHp) * 100}%"></div></div>
+                    <div class="w-full bg-slate-900 h-1 rounded-full overflow-hidden border border-slate-700"><div class="bg-sky-400 h-full" style="width: ${Math.min(100, (u.atb / 1000) * 100)}%"></div></div>
+                </div>`;
+            };
+            enemyArea.innerHTML = state.battle.enemy.map(unitHtml).join('');
+            allyArea.innerHTML = state.battle.ally.map(unitHtml).join('');
+        }
     </script>
 </body>
 </html>
