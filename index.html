@@ -8,20 +8,17 @@
     <style>
         .grade-UR { color: #f43f5e; text-shadow: 0 0 5px rgba(244,63,94,0.5); font-weight: bold; }
         .grade-SSR { color: #fbbf24; text-shadow: 0 0 4px rgba(251,191,36,0.4); }
-        .grade-SR { color: #c084fc; }
+        .grade-SR { color: #c084fc; font-weight: bold; }
         .grade-R { color: #60a5fa; }
         .grade-N { color: #9ca3af; }
-        .atb-bar { transition: width 0.1s linear; }
         .hp-bar { transition: width 0.3s ease-out; }
         ::-webkit-scrollbar { width: 4px; }
         ::-webkit-scrollbar-thumb { background: #475569; border-radius: 4px; }
-        @keyframes damage-pop { 0% { transform: translateY(0); opacity: 1; } 100% { transform: translateY(-20px); opacity: 0; } }
-        .damage-text { animation: damage-pop 0.8s forwards; }
     </style>
 </head>
 <body class="bg-slate-900 text-slate-300 font-sans select-none overflow-hidden fixed inset-0 flex flex-col">
 
-    <header class="bg-slate-800 p-3 flex justify-between items-center border-b border-slate-700 shrink-0 z-10">
+    <header class="bg-slate-800 p-3 flex justify-between items-center border-b border-slate-700 shrink-0 z-10 shadow-md">
         <div class="text-base font-bold text-white tracking-widest">📜 천기의 기록</div>
         <div class="flex gap-3 text-xs font-semibold">
             <span class="text-blue-300">💠 <span id="ui-skystone">0</span></span>
@@ -30,491 +27,7 @@
         </div>
     </header>
 
-    <main id="main-content" class="flex-1 overflow-hidden relative w-full flex flex-col"></main>
-
-    <footer class="bg-slate-800 flex justify-around p-2 border-t border-slate-700 shrink-0 text-sm pb-safe z-10 shadow-lg">
-        <button onclick="switchTab('barracks')" id="tab-barracks" class="w-1/4 py-3 rounded font-bold">⛺ 막사</button>
-        <button onclick="switchTab('battle')" id="tab-battle" class="w-1/4 py-3 rounded font-bold text-yellow-400">⚔️ 출정</button>
-        <button onclick="switchTab('gacha')" id="tab-gacha" class="w-1/4 py-3 rounded font-bold text-blue-400">🏮 등용</button>
-        <button onclick="switchTab('legacy')" id="tab-legacy" class="w-1/4 py-3 rounded font-bold text-purple-400">🏛️ 가문</button>
-    </footer>
-
-    <div id="modal-gacha" class="hidden fixed inset-0 z-50 bg-black/95 flex flex-col items-center justify-center p-4">
-        <div class="text-center w-full max-w-sm">
-            <h2 class="text-2xl font-bold text-amber-400 mb-4 border-b border-slate-700 pb-2">등용 결과</h2>
-            <div id="gacha-result-list" class="grid grid-cols-2 gap-2 max-h-[60vh] overflow-y-auto pb-4"></div>
-            <button onclick="closeModal('modal-gacha')" class="mt-4 w-full py-4 bg-slate-700 text-white font-bold rounded-xl">확인 완료</button>
-        </div>
-    </div>
-
-    <script>
-        var state = {
-            activeTab: 'gacha',
-            player: {
-                resources: { skyStones: 5000, tacticsManuals: 0, legacyPoints: 0 },
-                roster: [],
-                party: [null, null, null, null, null] // 0,1: 전열 / 2,3,4: 후열
-            },
-            battle: {
-                timer: null,
-                logs: [],
-                ally: [],
-                enemy: []
-            }
-        };
-
-        var HERO_DB = [
-            { id: 'H001', name: '유비', grade: 'UR', role: '군주', attr: '인', stats: { str: 60, int: 85, con: 80, spd: 65 } },
-            { id: 'H002', name: '관우', grade: 'UR', role: '맹장', attr: '천', stats: { str: 98, int: 75, con: 85, spd: 78 } },
-            { id: 'H003', name: '장비', grade: 'UR', role: '호위', attr: '지', stats: { str: 97, int: 40, con: 95, spd: 70 } },
-            { id: 'H004', name: '조운', grade: 'UR', role: '맹장', attr: '인', stats: { str: 96, int: 70, con: 85, spd: 92 } },
-            { id: 'H005', name: '여포', grade: 'UR', role: '맹장', attr: '천', stats: { str: 100, int: 30, con: 90, spd: 85 } },
-            { id: 'H006', name: '하후돈', grade: 'SSR', role: '호위', attr: '천', stats: { str: 88, int: 60, con: 92, spd: 62 } },
-            { id: 'H017', name: '황건적', grade: 'N', role: '맹장', attr: '지', stats: { str: 30, int: 10, con: 30, spd: 30 } },
-            { id: 'H018', name: '민병대', grade: 'N', role: '호위', attr: '인', stats: { str: 20, int: 10, con: 40, spd: 25 } }
-        ];
-
-        function updateUI() {
-            document.getElementById('ui-skystone').innerText = state.player.resources.skyStones.toLocaleString();
-            document.getElementById('ui-manual').innerText = state.player.resources.tacticsManuals.toLocaleString();
-            document.getElementById('ui-legacy').innerText = state.player.resources.legacyPoints.toLocaleString();
-        }
-
-        function switchTab(tab) {
-            state.activeTab = tab;
-            clearInterval(state.battle.timer);
-            
-            var tabs = ['barracks', 'battle', 'gacha', 'legacy'];
-            tabs.forEach(t => document.getElementById('tab-' + t)?.classList.remove('bg-slate-700'));
-            document.getElementById('tab-' + tab)?.classList.add('bg-slate-700');
-
-            var main = document.getElementById('main-content');
-            if (tab === 'gacha') renderGacha(main);
-            else if (tab === 'barracks') renderBarracks(main);
-            else if (tab === 'battle') initBattle(main);
-        }
-
-        /* --- 전투 엔진 로직 --- */
-        function initBattle(container) {
-            // 파티가 비어있으면 경고
-            if (state.player.party.every(s => s === null)) {
-                container.innerHTML = '<div class="text-center pt-20">출전할 무장이 없습니다. 막사에서 편성해주세요.</div>';
-                return;
-            }
-
-            // 아군 데이터 생성
-            state.battle.ally = state.player.party.map((id, idx) => {
-                if (!id) return null;
-                var data = HERO_DB.find(h => h.id === id);
-                return { ...data, hp: data.stats.con * 50, maxHp: data.stats.con * 50, atb: 0, pos: idx, side: 'ally' };
-            }).filter(u => u !== null);
-
-            // 적군 데이터 생성 (스테이지 비례 자동 생성)
-            state.battle.enemy = [
-                { id: 'E1', name: '황건적 수령', grade: 'R', role: '맹장', attr: '지', stats: { str: 50, int: 20, con: 60, spd: 40 }, side: 'enemy' },
-                { id: 'E2', name: '황건적병', grade: 'N', role: '맹장', attr: '지', stats: { str: 30, int: 10, con: 30, spd: 30 }, side: 'enemy' }
-            ].map(e => ({ ...e, hp: e.stats.con * 40, maxHp: e.stats.con * 40, atb: 0 }));
-
-            renderBattleScreen(container);
-            state.battle.timer = setInterval(battleTick, 100);
-        }
-
-        function battleTick() {
-            var allUnits = [...state.battle.ally, ...state.battle.enemy];
-            allUnits.sort((a, b) => b.atb - a.atb);
-
-            // ATB 증가
-            allUnits.forEach(u => {
-                if (u.hp > 0) u.atb += u.stats.spd * 0.5;
-            });
-
-            // 턴 실행 (게이지 1000 돌파 시)
-            var activeUnit = allUnits.find(u => u.atb >= 1000);
-            if (activeUnit) {
-                executeTurn(activeUnit);
-                activeUnit.atb = 0;
-            }
-            updateBattleUI();
-        }
-
-        function executeTurn(unit) {
-            var targets = unit.side === 'ally' ? state.battle.enemy : state.battle.ally;
-            var aliveTargets = targets.filter(t => t.hp > 0);
-            if (aliveTargets.length === 0) return;
-
-            var target = aliveTargets[Math.floor(Math.random() * aliveTargets.length)];
-            
-            // 데미지 공식: (무력 * 5) * (100 / (100 + 방어력))
-            var baseDmg = unit.stats.str * 5;
-            var def = target.stats.con * 2;
-            var miti = 100 / (100 + def);
-            
-            // 상성 적용 (천 > 지 > 인 > 천)
-            var attrBonus = 1.0;
-            if ((unit.attr === '천' && target.attr === '지') || (unit.attr === '지' && target.attr === '인') || (unit.attr === '인' && target.attr === '천')) attrBonus = 1.3;
-            
-            var finalDmg = Math.floor(baseDmg * miti * attrBonus);
-            target.hp = Math.max(0, target.hp - finalDmg);
-
-            addLog(`${unit.name}의 공격! ${target.name}에게 ${finalDmg} 피해!`);
-        }
-
-        function addLog(msg) {
-            state.battle.logs.unshift(msg);
-            if (state.battle.logs.length > 5) state.battle.logs.pop();
-            var logEl = document.getElementById('battle-logs');
-            if (logEl) {
-                logEl.innerHTML = state.battle.logs.map(l => `<div class="mb-1 text-[11px] border-b border-slate-800 pb-1">${l}</div>`).join('');
-            }
-        }
-
-        function renderBattleScreen(container) {
-            container.innerHTML = `
-                <div class="flex-1 flex flex-col p-2">
-                    <div id="enemy-area" class="flex justify-around items-end h-1/3 pb-4 border-b border-slate-800"></div>
-                    
-                    <div id="battle-logs" class="h-20 bg-black/40 my-2 rounded p-2 overflow-hidden text-slate-400"></div>
-
-                    <div id="ally-area" class="flex justify-around items-start h-1/3 pt-4"></div>
-                </div>
-            `;
-            updateBattleUI();
-        }
-
-        function updateBattleUI() {
-            var enemyArea = document.getElementById('enemy-area');
-            var allyArea = document.getElementById('ally-area');
-            if (!enemyArea || !allyArea) return;
-
-            const unitHtml = (u) => `
-                <div class="flex flex-col items-center w-16">
-                    <div class="text-[9px] mb-1 font-bold ${u.hp <= 0 ? 'line-through opacity-50' : ''}">${u.name}</div>
-                    <div class="w-full bg-slate-800 h-1 rounded overflow-hidden mb-1">
-                        <div class="hp-bar bg-red-500 h-full" style="width: ${(u.hp / u.maxHp) * 100}%"></div>
-                    </div>
-                    <div class="w-full bg-slate-800 h-0.5 rounded overflow-hidden">
-                        <div class="atb-bar bg-sky-400 h-full" style="width: ${Math.min(100, (u.atb / 1000) * 100)}%"></div>
-                    </div>
-                    <div class="text-[14px] mt-2">${u.hp <= 0 ? '💀' : (u.side === 'ally' ? '🛡️' : '⚔️')}</div>
-                </div>
-            `;
-
-            enemyArea.innerHTML = state.battle.enemy.map(unitHtml).join('');
-            allyArea.innerHTML = state.battle.ally.map(unitHtml).join('');
-        }
-
-        /* --- 가챠 및 막사 로직 (이전과 동일) --- */
-        function renderGacha(container) {
-            container.innerHTML = `
-                <div class="text-center mt-10">
-                    <h2 class="text-2xl font-bold text-blue-400 mb-2 italic">🏮 천기 등용문</h2>
-                    <p class="text-xs text-slate-400">0.05%의 기적을 믿으십니까?</p>
-                </div>
-                <div class="flex flex-col gap-4 max-w-xs mx-auto mt-20">
-                    <button onclick="doGacha(10)" class="w-full py-5 bg-slate-800 border-2 border-amber-500/50 rounded-2xl font-bold text-lg active:scale-95 transition-transform shadow-lg shadow-amber-500/10">10회 등용 <span class="text-xs ml-2">💠 1,000</span></button>
-                </div>
-            `;
-        }
-
-        function doGacha(times) {
-            if(state.player.resources.skyStones < 1000) return alert("부족!");
-            state.player.resources.skyStones -= 1000;
-            var res = [];
-            for(var i=0; i<times; i++) {
-                var roll = Math.random() * 100;
-                var grade = roll < 0.05 ? 'UR' : (roll < 1.05 ? 'SSR' : (roll < 11.05 ? 'SR' : 'N'));
-                var pool = HERO_DB.filter(h => h.grade === grade);
-                var hero = pool[Math.floor(Math.random() * pool.length)] || HERO_DB[HERO_DB.length-1];
-                var exist = state.player.roster.find(r => r.id === hero.id);
-                if(exist) exist.count++; else state.player.roster.push({id: hero.id, count: 1});
-                res.push({...hero, isDup: !!exist});
-            }
-            updateUI();
-            var html = res.map(r => `<div class="bg-slate-800 p-2 rounded border border-slate-700 text-center"><div class="text-[10px] opacity-50">${r.grade}</div><div class="font-bold text-xs grade-${r.grade}">${r.name}</div></div>`).join('');
-            document.getElementById('gacha-result-list').innerHTML = html;
-            document.getElementById('modal-gacha').classList.remove('hidden');
-        }
-
-        function renderBarracks(container) {
-            var html = '<div class="text-center mb-4 font-bold text-amber-400">부대 편성</div><div class="flex gap-2 mb-6 justify-center">';
-            for(var i=0; i<5; i++) {
-                var id = state.player.party[i];
-                var h = id ? HERO_DB.find(x => x.id === id) : null;
-                html += `<div onclick="removeFromParty(${i})" class="w-16 h-20 border-2 ${h?'border-sky-500 bg-slate-800':'border-slate-700 bg-slate-900'} rounded-lg flex flex-col items-center justify-center relative">
-                    <span class="text-[10px] font-bold grade-${h?.grade}">${h?h.name:'空'}</span>
-                </div>`;
-            }
-            html += '</div><div class="text-xs mb-2 border-b border-slate-700 pb-1">보유 무장 리스트</div><div class="grid grid-cols-1 gap-2">';
-            state.player.roster.forEach(r => {
-                var d = HERO_DB.find(x => x.id === r.id);
-                var inP = state.player.party.includes(d.id);
-                html += `<div onclick="${inP?'':`addToParty('${d.id}')`}" class="bg-slate-800 p-3 rounded border ${inP?'border-slate-700 opacity-50':'border-slate-600'} flex justify-between">
-                    <span class="grade-${d.grade} font-bold">${d.name} (${d.attr})</span>
-                    <span class="text-[10px] text-slate-500">${inP?'출전중':'대기'} (x${r.count})</span>
-                </div>`;
-            });
-            container.innerHTML = html + '</div>';
-        }
-
-        function addToParty(id) {
-            var idx = state.player.party.indexOf(null);
-            if(idx !== -1) { state.player.party[idx] = id; renderBarracks(document.getElementById('main-content')); }
-        }
-
-        function removeFromParty(i) {
-            state.player.party[i] = null; renderBarracks(document.getElementById('main-content'));
-        }
-
-        function closeModal(id) { document.getElementById(id).classList.add('hidden'); }
-
-        window.onload = () => { updateUI(); switchTab('gacha'); };
-    </script>
-</body>
-</html>
-        <button onclick="switchTab('battle')" id="tab-battle" class="w-1/4 py-3 rounded font-bold text-yellow-400">⚔️ 출정</button>
-        <button onclick="switchTab('gacha')" id="tab-gacha" class="w-1/4 py-3 rounded font-bold text-blue-400">🏮 등용</button>
-        <button onclick="switchTab('legacy')" id="tab-legacy" class="w-1/4 py-3 rounded font-bold text-purple-400">🏛️ 가문</button>
-    </footer>
-
-    <div id="modal-gacha" class="hidden fixed inset-0 z-50 bg-black/95 flex flex-col items-center justify-center p-4">
-        <div class="text-center w-full max-w-sm">
-            <h2 class="text-2xl font-bold text-amber-400 mb-4 border-b border-slate-700 pb-2">등용 결과</h2>
-            <div id="gacha-result-list" class="grid grid-cols-2 gap-2 max-h-[60vh] overflow-y-auto pb-4"></div>
-            <button onclick="closeModal('modal-gacha')" class="mt-4 w-full py-4 bg-slate-700 text-white font-bold rounded-xl">확인 완료</button>
-        </div>
-    </div>
-
-    <script>
-        var state = {
-            activeTab: 'gacha',
-            player: {
-                resources: { skyStones: 5000, tacticsManuals: 0, legacyPoints: 0 },
-                roster: [],
-                party: [null, null, null, null, null] // 0,1: 전열 / 2,3,4: 후열
-            },
-            battle: {
-                timer: null,
-                logs: [],
-                ally: [],
-                enemy: []
-            }
-        };
-
-        var HERO_DB = [
-            { id: 'H001', name: '유비', grade: 'UR', role: '군주', attr: '인', stats: { str: 60, int: 85, con: 80, spd: 65 } },
-            { id: 'H002', name: '관우', grade: 'UR', role: '맹장', attr: '천', stats: { str: 98, int: 75, con: 85, spd: 78 } },
-            { id: 'H003', name: '장비', grade: 'UR', role: '호위', attr: '지', stats: { str: 97, int: 40, con: 95, spd: 70 } },
-            { id: 'H004', name: '조운', grade: 'UR', role: '맹장', attr: '인', stats: { str: 96, int: 70, con: 85, spd: 92 } },
-            { id: 'H005', name: '여포', grade: 'UR', role: '맹장', attr: '천', stats: { str: 100, int: 30, con: 90, spd: 85 } },
-            { id: 'H006', name: '하후돈', grade: 'SSR', role: '호위', attr: '천', stats: { str: 88, int: 60, con: 92, spd: 62 } },
-            { id: 'H017', name: '황건적', grade: 'N', role: '맹장', attr: '지', stats: { str: 30, int: 10, con: 30, spd: 30 } },
-            { id: 'H018', name: '민병대', grade: 'N', role: '호위', attr: '인', stats: { str: 20, int: 10, con: 40, spd: 25 } }
-        ];
-
-        function updateUI() {
-            document.getElementById('ui-skystone').innerText = state.player.resources.skyStones.toLocaleString();
-            document.getElementById('ui-manual').innerText = state.player.resources.tacticsManuals.toLocaleString();
-            document.getElementById('ui-legacy').innerText = state.player.resources.legacyPoints.toLocaleString();
-        }
-
-        function switchTab(tab) {
-            state.activeTab = tab;
-            clearInterval(state.battle.timer);
-            
-            var tabs = ['barracks', 'battle', 'gacha', 'legacy'];
-            tabs.forEach(t => document.getElementById('tab-' + t)?.classList.remove('bg-slate-700'));
-            document.getElementById('tab-' + tab)?.classList.add('bg-slate-700');
-
-            var main = document.getElementById('main-content');
-            if (tab === 'gacha') renderGacha(main);
-            else if (tab === 'barracks') renderBarracks(main);
-            else if (tab === 'battle') initBattle(main);
-        }
-
-        /* --- 전투 엔진 로직 --- */
-        function initBattle(container) {
-            // 파티가 비어있으면 경고
-            if (state.player.party.every(s => s === null)) {
-                container.innerHTML = '<div class="text-center pt-20">출전할 무장이 없습니다. 막사에서 편성해주세요.</div>';
-                return;
-            }
-
-            // 아군 데이터 생성
-            state.battle.ally = state.player.party.map((id, idx) => {
-                if (!id) return null;
-                var data = HERO_DB.find(h => h.id === id);
-                return { ...data, hp: data.stats.con * 50, maxHp: data.stats.con * 50, atb: 0, pos: idx, side: 'ally' };
-            }).filter(u => u !== null);
-
-            // 적군 데이터 생성 (스테이지 비례 자동 생성)
-            state.battle.enemy = [
-                { id: 'E1', name: '황건적 수령', grade: 'R', role: '맹장', attr: '지', stats: { str: 50, int: 20, con: 60, spd: 40 }, side: 'enemy' },
-                { id: 'E2', name: '황건적병', grade: 'N', role: '맹장', attr: '지', stats: { str: 30, int: 10, con: 30, spd: 30 }, side: 'enemy' }
-            ].map(e => ({ ...e, hp: e.stats.con * 40, maxHp: e.stats.con * 40, atb: 0 }));
-
-            renderBattleScreen(container);
-            state.battle.timer = setInterval(battleTick, 100);
-        }
-
-        function battleTick() {
-            var allUnits = [...state.battle.ally, ...state.battle.enemy];
-            allUnits.sort((a, b) => b.atb - a.atb);
-
-            // ATB 증가
-            allUnits.forEach(u => {
-                if (u.hp > 0) u.atb += u.stats.spd * 0.5;
-            });
-
-            // 턴 실행 (게이지 1000 돌파 시)
-            var activeUnit = allUnits.find(u => u.atb >= 1000);
-            if (activeUnit) {
-                executeTurn(activeUnit);
-                activeUnit.atb = 0;
-            }
-            updateBattleUI();
-        }
-
-        function executeTurn(unit) {
-            var targets = unit.side === 'ally' ? state.battle.enemy : state.battle.ally;
-            var aliveTargets = targets.filter(t => t.hp > 0);
-            if (aliveTargets.length === 0) return;
-
-            var target = aliveTargets[Math.floor(Math.random() * aliveTargets.length)];
-            
-            // 데미지 공식: (무력 * 5) * (100 / (100 + 방어력))
-            var baseDmg = unit.stats.str * 5;
-            var def = target.stats.con * 2;
-            var miti = 100 / (100 + def);
-            
-            // 상성 적용 (천 > 지 > 인 > 천)
-            var attrBonus = 1.0;
-            if ((unit.attr === '천' && target.attr === '지') || (unit.attr === '지' && target.attr === '인') || (unit.attr === '인' && target.attr === '천')) attrBonus = 1.3;
-            
-            var finalDmg = Math.floor(baseDmg * miti * attrBonus);
-            target.hp = Math.max(0, target.hp - finalDmg);
-
-            addLog(`${unit.name}의 공격! ${target.name}에게 ${finalDmg} 피해!`);
-        }
-
-        function addLog(msg) {
-            state.battle.logs.unshift(msg);
-            if (state.battle.logs.length > 5) state.battle.logs.pop();
-            var logEl = document.getElementById('battle-logs');
-            if (logEl) {
-                logEl.innerHTML = state.battle.logs.map(l => `<div class="mb-1 text-[11px] border-b border-slate-800 pb-1">${l}</div>`).join('');
-            }
-        }
-
-        function renderBattleScreen(container) {
-            container.innerHTML = `
-                <div class="flex-1 flex flex-col p-2">
-                    <div id="enemy-area" class="flex justify-around items-end h-1/3 pb-4 border-b border-slate-800"></div>
-                    
-                    <div id="battle-logs" class="h-20 bg-black/40 my-2 rounded p-2 overflow-hidden text-slate-400"></div>
-
-                    <div id="ally-area" class="flex justify-around items-start h-1/3 pt-4"></div>
-                </div>
-            `;
-            updateBattleUI();
-        }
-
-        function updateBattleUI() {
-            var enemyArea = document.getElementById('enemy-area');
-            var allyArea = document.getElementById('ally-area');
-            if (!enemyArea || !allyArea) return;
-
-            const unitHtml = (u) => `
-                <div class="flex flex-col items-center w-16">
-                    <div class="text-[9px] mb-1 font-bold ${u.hp <= 0 ? 'line-through opacity-50' : ''}">${u.name}</div>
-                    <div class="w-full bg-slate-800 h-1 rounded overflow-hidden mb-1">
-                        <div class="hp-bar bg-red-500 h-full" style="width: ${(u.hp / u.maxHp) * 100}%"></div>
-                    </div>
-                    <div class="w-full bg-slate-800 h-0.5 rounded overflow-hidden">
-                        <div class="atb-bar bg-sky-400 h-full" style="width: ${Math.min(100, (u.atb / 1000) * 100)}%"></div>
-                    </div>
-                    <div class="text-[14px] mt-2">${u.hp <= 0 ? '💀' : (u.side === 'ally' ? '🛡️' : '⚔️')}</div>
-                </div>
-            `;
-
-            enemyArea.innerHTML = state.battle.enemy.map(unitHtml).join('');
-            allyArea.innerHTML = state.battle.ally.map(unitHtml).join('');
-        }
-
-        /* --- 가챠 및 막사 로직 (이전과 동일) --- */
-        function renderGacha(container) {
-            container.innerHTML = `
-                <div class="text-center mt-10">
-                    <h2 class="text-2xl font-bold text-blue-400 mb-2 italic">🏮 천기 등용문</h2>
-                    <p class="text-xs text-slate-400">0.05%의 기적을 믿으십니까?</p>
-                </div>
-                <div class="flex flex-col gap-4 max-w-xs mx-auto mt-20">
-                    <button onclick="doGacha(10)" class="w-full py-5 bg-slate-800 border-2 border-amber-500/50 rounded-2xl font-bold text-lg active:scale-95 transition-transform shadow-lg shadow-amber-500/10">10회 등용 <span class="text-xs ml-2">💠 1,000</span></button>
-                </div>
-            `;
-        }
-
-        function doGacha(times) {
-            if(state.player.resources.skyStones < 1000) return alert("부족!");
-            state.player.resources.skyStones -= 1000;
-            var res = [];
-            for(var i=0; i<times; i++) {
-                var roll = Math.random() * 100;
-                var grade = roll < 0.05 ? 'UR' : (roll < 1.05 ? 'SSR' : (roll < 11.05 ? 'SR' : 'N'));
-                var pool = HERO_DB.filter(h => h.grade === grade);
-                var hero = pool[Math.floor(Math.random() * pool.length)] || HERO_DB[HERO_DB.length-1];
-                var exist = state.player.roster.find(r => r.id === hero.id);
-                if(exist) exist.count++; else state.player.roster.push({id: hero.id, count: 1});
-                res.push({...hero, isDup: !!exist});
-            }
-            updateUI();
-            var html = res.map(r => `<div class="bg-slate-800 p-2 rounded border border-slate-700 text-center"><div class="text-[10px] opacity-50">${r.grade}</div><div class="font-bold text-xs grade-${r.grade}">${r.name}</div></div>`).join('');
-            document.getElementById('gacha-result-list').innerHTML = html;
-            document.getElementById('modal-gacha').classList.remove('hidden');
-        }
-
-        function renderBarracks(container) {
-            var html = '<div class="text-center mb-4 font-bold text-amber-400">부대 편성</div><div class="flex gap-2 mb-6 justify-center">';
-            for(var i=0; i<5; i++) {
-                var id = state.player.party[i];
-                var h = id ? HERO_DB.find(x => x.id === id) : null;
-                html += `<div onclick="removeFromParty(${i})" class="w-16 h-20 border-2 ${h?'border-sky-500 bg-slate-800':'border-slate-700 bg-slate-900'} rounded-lg flex flex-col items-center justify-center relative">
-                    <span class="text-[10px] font-bold grade-${h?.grade}">${h?h.name:'空'}</span>
-                </div>`;
-            }
-            html += '</div><div class="text-xs mb-2 border-b border-slate-700 pb-1">보유 무장 리스트</div><div class="grid grid-cols-1 gap-2">';
-            state.player.roster.forEach(r => {
-                var d = HERO_DB.find(x => x.id === r.id);
-                var inP = state.player.party.includes(d.id);
-                html += `<div onclick="${inP?'':`addToParty('${d.id}')`}" class="bg-slate-800 p-3 rounded border ${inP?'border-slate-700 opacity-50':'border-slate-600'} flex justify-between">
-                    <span class="grade-${d.grade} font-bold">${d.name} (${d.attr})</span>
-                    <span class="text-[10px] text-slate-500">${inP?'출전중':'대기'} (x${r.count})</span>
-                </div>`;
-            });
-            container.innerHTML = html + '</div>';
-        }
-
-        function addToParty(id) {
-            var idx = state.player.party.indexOf(null);
-            if(idx !== -1) { state.player.party[idx] = id; renderBarracks(document.getElementById('main-content')); }
-        }
-
-        function removeFromParty(i) {
-            state.player.party[i] = null; renderBarracks(document.getElementById('main-content'));
-        }
-
-        function closeModal(id) { document.getElementById(id).classList.add('hidden'); }
-
-        window.onload = () => { updateUI(); switchTab('gacha'); };
-    </script>
-</body>
-</html>
-                시스템을 강제 가동하세요.
-            </div>
-            <button onclick="startGameEngine()" class="px-6 py-3 bg-blue-600 hover:bg-blue-500 text-white font-bold rounded-lg shadow-lg active:scale-95 transition-transform">
-                게임 시작하기 (터치)
-            </button>
-        </div>
-    </main>
+    <main id="main-content" class="flex-1 overflow-y-auto relative w-full flex flex-col"></main>
 
     <footer class="bg-slate-800 flex justify-around p-2 border-t border-slate-700 shrink-0 text-sm pb-safe z-10 shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.1)]">
         <button onclick="switchTab('barracks')" id="tab-barracks" class="w-1/4 py-3 rounded hover:bg-slate-700 font-bold transition-colors">⛺ 막사</button>
@@ -523,11 +36,11 @@
         <button onclick="switchTab('legacy')" id="tab-legacy" class="w-1/4 py-3 rounded hover:bg-slate-700 font-bold text-purple-400 transition-colors">🏛️ 가문</button>
     </footer>
 
-    <div id="modal-gacha" class="hidden fixed inset-0 z-50 bg-black/90 flex flex-col items-center justify-center p-4 backdrop-blur-sm">
+    <div id="modal-gacha" class="hidden fixed inset-0 z-50 bg-black/95 flex flex-col items-center justify-center p-4 backdrop-blur-sm">
         <div class="text-center w-full max-w-sm">
-            <h2 class="text-2xl font-bold text-amber-400 mb-4 border-b border-slate-600 pb-2">등용 결과</h2>
-            <div id="gacha-result-list" class="grid grid-cols-2 gap-2 max-h-[60vh] overflow-y-auto custom-scrollbar pr-1 pb-4"></div>
-            <button onclick="closeModal('modal-gacha')" class="mt-4 w-full py-3 bg-slate-700 text-white font-bold rounded-lg active:bg-slate-600 shadow-lg">확인 완료</button>
+            <h2 class="text-2xl font-bold text-amber-400 mb-4 border-b border-slate-700 pb-2">등용 결과</h2>
+            <div id="gacha-result-list" class="grid grid-cols-2 gap-2 max-h-[60vh] overflow-y-auto pr-1 pb-4"></div>
+            <button onclick="closeModal('modal-gacha')" class="mt-4 w-full py-4 bg-slate-700 text-white font-bold rounded-xl shadow-lg active:scale-95">확인 완료</button>
         </div>
     </div>
 
@@ -538,24 +51,26 @@
                 resources: { skyStones: 5000, tacticsManuals: 0, legacyPoints: 0 },
                 roster: [],
                 party: [null, null, null, null, null]
-            }
+            },
+            battle: { timer: null, logs: [], ally: [], enemy: [] }
         };
 
+        // 상세 스탯이 부여된 무장 DB
         var HERO_DB = [
-            { id: 'H001', name: '유비', grade: 'UR', role: '군주', stat: '지력/통솔' },
-            { id: 'H002', name: '관우', grade: 'UR', role: '맹장', stat: '무력' },
-            { id: 'H003', name: '조조', grade: 'UR', role: '군주', stat: '지력' },
-            { id: 'H004', name: '여포', grade: 'UR', role: '맹장', stat: '무력' },
-            { id: 'H005', name: '조운', grade: 'SSR', role: '맹장', stat: '무력/민첩' },
-            { id: 'H006', name: '하후돈', grade: 'SSR', role: '호위', stat: '통솔' },
-            { id: 'H007', name: '제갈량', grade: 'SSR', role: '모사', stat: '지력' },
-            { id: 'H012', name: '황건적', grade: 'N', role: '맹장', stat: '무력' }
+            { id: 'H001', name: '유비', grade: 'UR', role: '군주', attr: '인', stats: { str: 60, int: 85, con: 80, spd: 65 } },
+            { id: 'H002', name: '관우', grade: 'UR', role: '맹장', attr: '천', stats: { str: 98, int: 75, con: 85, spd: 78 } },
+            { id: 'H003', name: '장비', grade: 'UR', role: '호위', attr: '지', stats: { str: 97, int: 40, con: 95, spd: 70 } },
+            { id: 'H004', name: '조운', grade: 'UR', role: '맹장', attr: '인', stats: { str: 96, int: 70, con: 85, spd: 92 } },
+            { id: 'H005', name: '여포', grade: 'UR', role: '맹장', attr: '천', stats: { str: 100, int: 30, con: 90, spd: 85 } },
+            { id: 'H006', name: '제갈량', grade: 'UR', role: '모사', attr: '천', stats: { str: 20, int: 100, con: 60, spd: 80 } },
+            { id: 'H007', name: '하후돈', grade: 'SSR', role: '호위', attr: '천', stats: { str: 88, int: 60, con: 92, spd: 62 } },
+            { id: 'H008', name: '마초', grade: 'SSR', role: '맹장', attr: '지', stats: { str: 93, int: 45, con: 80, spd: 88 } },
+            { id: 'H009', name: '위연', grade: 'SR', role: '맹장', attr: '인', stats: { str: 85, int: 50, con: 75, spd: 75 } },
+            { id: 'H010', name: '황개', grade: 'R', role: '호위', attr: '지', stats: { str: 75, int: 60, con: 80, spd: 55 } },
+            { id: 'H011', name: '황건적', grade: 'N', role: '맹장', attr: '지', stats: { str: 30, int: 10, con: 30, spd: 30 } },
+            { id: 'H012', name: '민병대', grade: 'N', role: '호위', attr: '인', stats: { str: 20, int: 10, con: 40, spd: 25 } },
+            { id: 'H013', name: '서량기병', grade: 'N', role: '맹장', attr: '천', stats: { str: 40, int: 15, con: 35, spd: 45 } }
         ];
-
-        function startGameEngine() {
-            updateUI();
-            switchTab('gacha');
-        }
 
         function updateUI() {
             document.getElementById('ui-skystone').innerText = state.player.resources.skyStones.toLocaleString();
@@ -564,64 +79,255 @@
         }
 
         function switchTab(tab) {
+            state.activeTab = tab;
+            if(state.battle.timer) clearInterval(state.battle.timer);
+            
             var tabs = ['barracks', 'battle', 'gacha', 'legacy'];
-            tabs.forEach(t => document.getElementById('tab-' + t)?.classList.remove('bg-slate-700'));
-            document.getElementById('tab-' + tab)?.classList.add('bg-slate-700');
+            tabs.forEach(function(t) {
+                var btn = document.getElementById('tab-' + t);
+                if(btn) btn.classList.remove('bg-slate-700');
+            });
+            var activeBtn = document.getElementById('tab-' + tab);
+            if(activeBtn) activeBtn.classList.add('bg-slate-700');
 
             var main = document.getElementById('main-content');
+            if(!main) return;
+            main.className = (tab === 'battle') ? "flex-1 overflow-hidden relative w-full flex flex-col" : "flex-1 overflow-y-auto p-4 relative w-full flex flex-col";
+
             if (tab === 'gacha') renderGacha(main);
             else if (tab === 'barracks') renderBarracks(main);
-            else main.innerHTML = '<div class="flex items-center justify-center h-full text-slate-500 text-sm">준비 중입니다.</div>';
+            else if (tab === 'battle') initBattle(main);
+            else main.innerHTML = '<div class="flex items-center justify-center h-full text-slate-500">준비 중입니다.</div>';
         }
 
+        /* --- 1. 등용문 (가챠) --- */
         function renderGacha(container) {
-            container.innerHTML = `
-                <div class="text-center mb-6 mt-4">
-                    <h2 class="text-2xl font-bold text-blue-400 mb-2">🏮 천기 등용문</h2>
-                    <p class="text-[10px] text-red-300 font-bold">확률: UR 0.05% / SSR 1.0%</p>
-                </div>
-                <div class="flex flex-col gap-4 max-w-xs mx-auto mt-10">
-                    <button onclick="doGacha(1)" class="w-full py-4 bg-slate-800 border border-blue-500/50 rounded-xl font-bold">1회 소환 💠 100</button>
-                    <button onclick="doGacha(10)" class="w-full py-4 bg-slate-800 border border-amber-500/50 rounded-xl font-bold">10회 소환 💠 1,000</button>
-                </div>`;
+            container.innerHTML = 
+                '<div class="text-center mt-6 mb-8">' +
+                    '<h2 class="text-3xl font-bold text-blue-400 mb-2 drop-shadow-md">🏮 천기 등용문</h2>' +
+                    '<p class="text-xs text-slate-400">0.05%의 기적, 신화 무장을 소환하세요.</p>' +
+                '</div>' +
+                '<div class="flex flex-col gap-5 max-w-xs mx-auto mt-10">' +
+                    '<button onclick="doGacha(1)" class="w-full py-4 bg-slate-800 border-2 border-blue-500/30 rounded-xl font-bold text-white shadow-lg active:scale-95 transition-transform">1회 소환 <span class="text-sky-300 text-xs ml-2">💠 100</span></button>' +
+                    '<button onclick="doGacha(10)" class="w-full py-5 bg-slate-800 border-2 border-amber-500/50 rounded-xl font-bold text-lg text-white shadow-[0_0_15px_rgba(245,158,11,0.2)] active:scale-95 transition-transform">10회 소환 <span class="text-amber-300 text-sm ml-2">💠 1,000</span></button>' +
+                '</div>';
         }
 
         function doGacha(times) {
             var cost = times * 100;
-            if(state.player.resources.skyStones < cost) return alert("천운석 부족!");
+            if(state.player.resources.skyStones < cost) return alert("천운석이 부족합니다!");
             state.player.resources.skyStones -= cost;
+            
             var results = [];
             for(var i=0; i<times; i++) {
                 var roll = Math.random() * 100;
-                var grade = roll < 0.05 ? 'UR' : (roll < 1.05 ? 'SSR' : 'N');
-                var pool = HERO_DB.filter(h => h.grade === grade);
-                var hero = pool[Math.floor(Math.random() * pool.length)] || HERO_DB[HERO_DB.length-1];
-                var existing = state.player.roster.find(r => r.id === hero.id);
-                if(existing) { existing.count++; results.push({...hero, isDup: true}); }
-                else { state.player.roster.push({id: hero.id, count: 1}); results.push({...hero, isDup: false}); }
+                var grade = roll < 0.05 ? 'UR' : (roll < 1.05 ? 'SSR' : (roll < 11.05 ? 'SR' : (roll < 51.05 ? 'R' : 'N')));
+                
+                var pool = HERO_DB.filter(function(h) { return h.grade === grade; });
+                if(pool.length === 0) pool = HERO_DB.filter(function(h) { return h.grade === 'N'; });
+                var hero = pool[Math.floor(Math.random() * pool.length)];
+                
+                var existing = state.player.roster.find(function(r) { return r.id === hero.id; });
+                if(existing) { 
+                    existing.count++; 
+                    results.push(Object.assign({}, hero, {isDup: true})); 
+                } else { 
+                    state.player.roster.push({id: hero.id, count: 1}); 
+                    results.push(Object.assign({}, hero, {isDup: false})); 
+                }
             }
             updateUI();
-            showResults(results);
-        }
-
-        function showResults(res) {
+            
             var html = '';
-            res.forEach(r => {
-                html += `<div class="bg-slate-800 border p-3 rounded-lg text-center">
-                    <div class="text-[10px]">${r.grade}</div>
-                    <div class="font-bold grade-${r.grade}">${r.name}</div>
-                    <div class="text-[9px]">${r.isDup ? '돌파' : 'NEW'}</div>
-                </div>`;
+            results.forEach(function(r) {
+                var border = r.grade === 'UR' ? 'border-red-500 bg-red-900/20' : (r.grade === 'SSR' ? 'border-amber-500 bg-amber-900/20' : 'border-slate-700 bg-slate-800');
+                var txt = r.isDup ? '<div class="text-[9px] mt-1 text-amber-400">✨ 돌파 조각</div>' : '<div class="text-[10px] mt-1 text-green-400 font-bold">NEW!</div>';
+                html += '<div class="border ' + border + ' p-3 rounded-xl text-center shadow-md">' +
+                        '<div class="text-[10px] text-slate-400 mb-1">' + r.grade + '</div>' +
+                        '<div class="font-bold text-sm grade-' + r.grade + '">' + r.name + '</div>' + txt +
+                        '</div>';
             });
             document.getElementById('gacha-result-list').innerHTML = html;
             document.getElementById('modal-gacha').classList.remove('hidden');
         }
 
+        /* --- 2. 막사 (편성) --- */
+        function renderBarracks(container) {
+            var html = '<div class="text-center mb-4 font-bold text-amber-400 drop-shadow">전술 진형 편성 (터치하여 해제)</div><div class="flex gap-2 mb-6 justify-center w-full max-w-sm mx-auto">';
+            for(var i=0; i<5; i++) {
+                var id = state.player.party[i];
+                var h = id ? HERO_DB.find(function(x) { return x.id === id; }) : null;
+                var style = h ? 'border-sky-500 bg-slate-800 shadow-[0_0_8px_rgba(14,165,233,0.3)]' : 'border-slate-700 bg-slate-900 border-dashed opacity-60';
+                html += '<div onclick="removeFromParty(' + i + ')" class="w-16 h-20 border-2 ' + style + ' rounded-lg flex flex-col items-center justify-center cursor-pointer">' +
+                        (h ? '<span class="text-[11px] font-bold grade-' + h.grade + '">' + h.name + '</span><span class="text-[9px] text-slate-400 mt-1">' + h.attr + '</span>' : '<span class="text-[10px] text-slate-500">비어있음</span>') +
+                        '</div>';
+            }
+            html += '</div><div class="text-xs font-bold mb-2 border-b border-slate-700 pb-1 text-slate-300">보유 무장 <span class="font-normal text-[10px] text-slate-500">(터치하여 출전)</span></div><div class="flex-1 overflow-y-auto space-y-2 pb-10">';
+            
+            if(state.player.roster.length === 0) {
+                html += '<div class="text-center text-slate-500 py-6 text-[11px] bg-slate-800/50 rounded-lg">보유한 무장이 없습니다.</div>';
+            } else {
+                state.player.roster.forEach(function(r) {
+                    var d = HERO_DB.find(function(x) { return x.id === r.id; });
+                    var inP = state.player.party.indexOf(d.id) !== -1;
+                    var bStyle = inP ? 'border-slate-700 opacity-50' : 'border-slate-600 bg-slate-800 active:bg-slate-700';
+                    var statStr = '무' + d.stats.str + ' 지' + d.stats.int + ' 통' + d.stats.con + ' 속' + d.stats.spd;
+                    
+                    html += '<div onclick="' + (inP ? '' : "addToParty('" + d.id + "')") + '" class="p-3 rounded-lg border ' + bStyle + ' flex justify-between items-center">' +
+                            '<div><div class="grade-' + d.grade + ' font-bold text-sm mb-1">' + d.name + ' <span class="text-[9px] text-slate-400">(' + d.attr + ')</span></div>' +
+                            '<div class="text-[9px] text-slate-500">' + statStr + '</div></div>' +
+                            '<div class="text-[10px] font-bold ' + (inP ? 'text-slate-600' : 'text-amber-400 bg-amber-900/30 px-3 py-1.5 rounded') + '">' + (inP ? '출전중' : '배치') + '</div>' +
+                            '</div>';
+                });
+            }
+            container.innerHTML = html + '</div>';
+        }
+
+        function addToParty(id) {
+            var idx = state.player.party.indexOf(null);
+            if(idx !== -1) { state.player.party[idx] = id; renderBarracks(document.getElementById('main-content')); }
+            else { alert("진형이 꽉 찼습니다! 위 편성창에서 무장을 터치해 해제하세요."); }
+        }
+        function removeFromParty(i) {
+            state.player.party[i] = null; renderBarracks(document.getElementById('main-content'));
+        }
         function closeModal(id) { document.getElementById(id).classList.add('hidden'); }
 
-        function renderBarracks(container) {
-            container.innerHTML = '<div class="text-center pt-10">막사 구현 완료 (보유 장수: ' + state.player.roster.length + '명)</div>';
+        /* --- 3. 출정 (ATB 전투) --- */
+        function initBattle(container) {
+            var hasHero = state.player.party.some(function(id) { return id !== null; });
+            if (!hasHero) {
+                container.innerHTML = '<div class="text-center pt-20 text-slate-400">출전할 무장이 없습니다.<br>막사에서 파티를 편성해주세요.</div>';
+                return;
+            }
+
+            state.battle.logs = ["전투가 시작되었습니다!"];
+            
+            // 아군 셋팅
+            state.battle.ally = state.player.party.map(function(id, idx) {
+                if (!id) return null;
+                var d = HERO_DB.find(function(h) { return h.id === id; });
+                return Object.assign({}, d, { hp: d.stats.con * 50, maxHp: d.stats.con * 50, atb: 0, pos: idx, side: 'ally' });
+            }).filter(function(u) { return u !== null; });
+
+            // 적군 셋팅 (스테이지 1)
+            state.battle.enemy = [
+                { id: 'E1', name: '황건적 대장', grade: 'R', role: '맹장', attr: '지', stats: { str: 45, int: 20, con: 50, spd: 40 }, side: 'enemy' },
+                { id: 'E2', name: '황건적 졸개', grade: 'N', role: '맹장', attr: '지', stats: { str: 30, int: 10, con: 30, spd: 30 }, side: 'enemy' },
+                { id: 'E3', name: '황건적 졸개', grade: 'N', role: '맹장', attr: '지', stats: { str: 30, int: 10, con: 30, spd: 30 }, side: 'enemy' }
+            ].map(function(e) { return Object.assign({}, e, { hp: e.stats.con * 50, maxHp: e.stats.con * 50, atb: 0 }); });
+
+            renderBattleScreen(container);
+            state.battle.timer = setInterval(battleTick, 100);
         }
+
+        function battleTick() {
+            var allUnits = state.battle.ally.concat(state.battle.enemy);
+            
+            // 전멸 체크
+            var allyAlive = state.battle.ally.filter(function(u) { return u.hp > 0; }).length;
+            var enemyAlive = state.battle.enemy.filter(function(u) { return u.hp > 0; }).length;
+            
+            if(allyAlive === 0 || enemyAlive === 0) {
+                clearInterval(state.battle.timer);
+                addLog(allyAlive === 0 ? "패배했습니다..." : "✨ 전투 승리! 전리품을 획득했습니다!");
+                updateBattleUI();
+                return;
+            }
+
+            // ATB 증가 및 턴 실행
+            allUnits.forEach(function(u) { if (u.hp > 0) u.atb += u.stats.spd * 0.5; });
+            var activeUnit = allUnits.find(function(u) { return u.atb >= 1000; });
+            
+            if (activeUnit) {
+                executeTurn(activeUnit);
+                activeUnit.atb = 0;
+            }
+            updateBattleUI();
+        }
+
+        function executeTurn(unit) {
+            var targets = unit.side === 'ally' ? state.battle.enemy : state.battle.ally;
+            var aliveTargets = targets.filter(function(t) { return t.hp > 0; });
+            if (aliveTargets.length === 0) return;
+
+            var target = aliveTargets[Math.floor(Math.random() * aliveTargets.length)];
+            
+            // 데미지 뼈대 공식
+            var baseDmg = unit.stats.str * 5;
+            var def = target.stats.con * 2;
+            var miti = 100 / (100 + def);
+            
+            // 속성 상성 적용
+            var attrBonus = 1.0;
+            if ((unit.attr === '천' && target.attr === '지') || (unit.attr === '지' && target.attr === '인') || (unit.attr === '인' && target.attr === '천')) {
+                attrBonus = 1.3;
+            }
+            
+            var finalDmg = Math.floor(baseDmg * miti * attrBonus);
+            finalDmg = Math.max(1, finalDmg); // 최소 데미지 보정
+            target.hp = Math.max(0, target.hp - finalDmg);
+
+            var logStr = "<span class='grade-" + unit.grade + " font-bold'>" + unit.name + "</span>의 타격! " + target.name + "에게 <span class='text-red-400 font-bold'>" + finalDmg + "</span> 피해!";
+            if(attrBonus > 1.0) logStr += " <span class='text-[9px] text-amber-400'>(상성 우위!)</span>";
+            addLog(logStr);
+        }
+
+        function addLog(msg) {
+            state.battle.logs.unshift(msg);
+            if (state.battle.logs.length > 50) state.battle.logs.pop(); // 로그 최대 50개 유지
+            var logEl = document.getElementById('battle-logs');
+            if (logEl) {
+                var html = '';
+                state.battle.logs.forEach(function(l, i) {
+                    var opacity = i === 0 ? 'opacity-100 font-bold text-white' : (i < 3 ? 'opacity-80' : 'opacity-40 text-[10px]');
+                    html += '<div class="mb-1 pb-1 border-b border-slate-800/50 ' + opacity + '">' + l + '</div>';
+                });
+                logEl.innerHTML = html;
+            }
+        }
+
+        function renderBattleScreen(container) {
+            container.innerHTML = 
+                '<div class="flex-1 flex flex-col p-2 h-full bg-[url(\'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI0IiBoZWlnaHQ9IjQiPgo8cmVjdCB3aWR0aD0iNCIgaGVpZ2h0PSI0IiBmaWxsPSIjMGYxNzJhIj48L3JlY3Q+CjxyZWN0IHdpZHRoPSIxIiBoZWlnaHQ9IjEiIGZpbGw9IiMxZTI5M2IiPjwvcmVjdD4KPC9zdmc+\')]">' +
+                    '<div id="enemy-area" class="flex justify-around items-end h-[30%] pb-2"></div>' +
+                    '<div id="battle-logs" class="flex-1 bg-black/60 rounded-xl p-3 overflow-y-auto text-[11px] text-slate-300 border border-slate-700/50 shadow-inner my-2 custom-scrollbar"></div>' +
+                    '<div id="ally-area" class="flex justify-around items-start h-[30%] pt-2"></div>' +
+                '</div>';
+            updateBattleUI();
+        }
+
+        function updateBattleUI() {
+            var enemyArea = document.getElementById('enemy-area');
+            var allyArea = document.getElementById('ally-area');
+            if (!enemyArea || !allyArea) return;
+
+            var unitHtml = function(u) {
+                var isDead = u.hp <= 0;
+                var hpPct = (u.hp / u.maxHp) * 100;
+                var atbPct = Math.min(100, (u.atb / 1000) * 100);
+                
+                return '<div class="flex flex-col items-center w-16 transition-opacity ' + (isDead ? 'opacity-30 grayscale' : '') + '">' +
+                       '<div class="text-[9px] mb-1 font-bold grade-' + u.grade + ' truncate w-full text-center">' + u.name + '</div>' +
+                       '<div class="w-full bg-slate-900 h-1.5 rounded-full overflow-hidden mb-1 border border-slate-700">' +
+                       '<div class="hp-bar ' + (u.side==='ally'?'bg-green-500':'bg-red-500') + ' h-full" style="width: ' + hpPct + '%"></div>' +
+                       '</div>' +
+                       '<div class="w-full bg-slate-900 h-1 rounded-full overflow-hidden border border-slate-700">' +
+                       '<div class="bg-sky-400 h-full" style="width: ' + atbPct + '%"></div>' +
+                       '</div>' +
+                       '<div class="text-sm mt-1 drop-shadow-md">' + (isDead ? '💀' : (u.side==='ally'?'🛡️':'👿')) + '</div>' +
+                       '</div>';
+            };
+
+            enemyArea.innerHTML = state.battle.enemy.map(unitHtml).join('');
+            allyArea.innerHTML = state.battle.ally.map(unitHtml).join('');
+        }
+
+        window.onload = function() {
+            updateUI();
+            switchTab('gacha');
+        };
     </script>
 </body>
 </html>
+
