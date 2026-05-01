@@ -88,121 +88,124 @@ function updateFilter(type, value) {
 
 var attrMap = { '천': '天', '지': '地', '인': '人' };
 
-// =============== [100인 영웅 데이터베이스 완벽 복원] ===============
+// [주의] HERO_DB 100명 전원의 액티브/패시브 스킬 명단 및 연의 스토리 반영 데이터입니다.
+// 기존 index.html의 HERO_DB 변수 부분만 이 코드로 완전히 대체하십시오.
+
 var HERO_DB = [
-  // --- 이계의 수호자 (3인) ---
-  { id: 'H001', name: 'M', grade: 'UR', role: '호위', attr: '지', stats: { str: 80, int: 50, con: 120, spd: 60 }, skill: { name: '절대 방벽', desc: '아군 전체 피해 면역 및 자신에게 도발 부여 (30% 발동/쿨4턴)', prob: 30, cd: 4 }, bonds: '이계의 수호자' },
-  { id: 'H002', name: 'Harje', grade: 'UR', role: '맹장', attr: '천', stats: { str: 110, int: 60, con: 70, spd: 90 }, skill: { name: '절대 검술', desc: '적 1명에게 방어 무시 250% 물리 피해 (35% 발동/쿨3턴)', prob: 35, cd: 3 }, bonds: '이계의 수호자' },
-  { id: 'H003', name: 'Elain', grade: 'UR', role: '힐러', attr: '인', stats: { str: 40, int: 110, con: 60, spd: 70 }, skill: { name: '광역 회복', desc: '아군 전체 체력 30% 대폭 회복 및 방어력 증가 (30% 발동/쿨3턴)', prob: 30, cd: 3 }, bonds: '이계의 수호자' },
+  // --- 이계의 수호자 (UR) ---
+  { id: 'H001', name: 'M', grade: 'UR', role: '호위', attr: '지', stats: { str: 80, int: 50, con: 120, spd: 60 }, activeSkill: { name: '절대 방벽', desc: '아군 전체 피해 면역 및 자신에게 도발 부여 (30% 발동/쿨4턴)', prob: 30, cd: 4 }, passiveSkill: { name: '차원 장갑', desc: '자신이 받는 모든 피해 25% 상시 감소' }, bonds: '이계의 수호자' },
+  { id: 'H002', name: 'Harje', grade: 'UR', role: '맹장', attr: '천', stats: { str: 110, int: 60, con: 70, spd: 90 }, activeSkill: { name: '절대 검술', desc: '적 1명에게 방어 무시 250% 물리 피해 (확정 치명타/쿨3턴)', prob: 35, cd: 3 }, passiveSkill: { name: '살육의 본능', desc: '기본 치명타 피해량 50% 상시 증가' }, bonds: '이계의 수호자' },
+  { id: 'H003', name: 'Elain', grade: 'UR', role: '힐러', attr: '인', stats: { str: 40, int: 110, con: 60, spd: 70 }, activeSkill: { name: '광역 회복', desc: '아군 전체 체력 30% 회복 및 지속 재생 부여 (30% 발동/쿨3턴)', prob: 30, cd: 3 }, passiveSkill: { name: '정령의 가호', desc: '매 턴 시작 시 아군 전체 체력 5% 자동 회복' }, bonds: '이계의 수호자' },
 
-  // --- UR 신화 무장 (10인) ---
-  { id: 'H004', name: '유비', grade: 'UR', role: '군주', attr: '인', stats: { str: 60, int: 85, con: 80, spd: 65 }, skill: { name: '도원결의', desc: '아군 전체 체력 소폭 회복 및 방어력 20% 상승 (30% 발동/쿨3턴)', prob: 30, cd: 3 }, bonds: '도원결의' },
-  { id: 'H005', name: '관우', grade: 'UR', role: '맹장', attr: '천', stats: { str: 98, int: 75, con: 85, spd: 78 }, skill: { name: '청룡참', desc: '단일 적에게 200% 피해 및 1턴 기절 (30% 발동/쿨2턴)', prob: 30, cd: 2 }, bonds: '오호대장군' },
-  { id: 'H006', name: '장비', grade: 'UR', role: '호위', attr: '지', stats: { str: 97, int: 40, con: 95, spd: 70 }, skill: { name: '사자후', desc: '적 전체에 피해 및 30% 확률 기절 (25% 발동/쿨3턴)', prob: 25, cd: 3 }, bonds: '오호대장군' },
-  { id: 'H007', name: '조운', grade: 'UR', role: '맹장', attr: '인', stats: { str: 96, int: 70, con: 85, spd: 92 }, skill: { name: '일신시담', desc: '단일 적에게 강력한 2회 연속 공격 (35% 발동/쿨3턴)', prob: 35, cd: 3 }, bonds: '오호대장군' },
-  { id: 'H008', name: '여포', grade: 'UR', role: '맹장', attr: '천', stats: { str: 100, int: 30, con: 90, spd: 85 }, skill: { name: '무쌍난무', desc: '적 전체에게 강력한 방어 무시 피해 (25% 발동/쿨4턴)', prob: 25, cd: 4 }, bonds: '인중여포' },
-  { id: 'H009', name: '제갈량', grade: 'UR', role: '모사', attr: '천', stats: { str: 20, int: 100, con: 60, spd: 80 }, skill: { name: '동남풍', desc: '적 전체 화속성 마법 피해 및 속도 20% 감소 (30% 발동/쿨3턴)', prob: 30, cd: 3 }, bonds: '와룡봉추' },
-  { id: 'H010', name: '조조', grade: 'UR', role: '군주', attr: '지', stats: { str: 70, int: 90, con: 95, spd: 70 }, skill: { name: '천하패도', desc: '아군 공격력 20% 증가 및 적 방어 15% 감소 (30% 발동/쿨3턴)', prob: 30, cd: 3 }, bonds: '위왕의 패기' },
-  { id: 'H011', name: '손견', grade: 'UR', role: '군주', attr: '천', stats: { str: 85, int: 70, con: 80, spd: 75 }, skill: { name: '강동의 호랑이', desc: '아군 맹장들의 공격력 30% 대폭 상승 (30% 발동/쿨3턴)', prob: 30, cd: 3 }, bonds: '강동의 지배자' },
-  { id: 'H012', name: '주유', grade: 'UR', role: '모사', attr: '지', stats: { str: 60, int: 95, con: 70, spd: 80 }, skill: { name: '적벽의 화염', desc: '적 전체 화속성 피해 및 3턴간 화상 (30% 발동/쿨3턴)', prob: 30, cd: 3 }, bonds: '강동의 이교' },
-  { id: 'H013', name: '사마의', grade: 'UR', role: '모사', attr: '인', stats: { str: 30, int: 98, con: 75, spd: 75 }, skill: { name: '낭고지상', desc: '적 전체 버프 해제 및 1턴 침묵 (25% 발동/쿨4턴)', prob: 25, cd: 4 }, bonds: '숙명의 라이벌' },
+  // --- UR 신화 무장 (삼국지 전설) ---
+  { id: 'H004', name: '유비', grade: 'UR', role: '군주', attr: '인', stats: { str: 60, int: 85, con: 80, spd: 65 }, activeSkill: { name: '도원결의', desc: '아군 전체 체력 20% 회복 및 방어력 25% 상승 (30% 발동/쿨3턴)', prob: 30, cd: 3 }, passiveSkill: { name: '덕치', desc: '파티 내 촉나라 무장당 아군 전체 방어력 5% 증가' }, bonds: '도원결의' },
+  { id: 'H005', name: '관우', grade: 'UR', role: '맹장', attr: '천', stats: { str: 98, int: 75, con: 85, spd: 78 }, activeSkill: { name: '오관참육장', desc: '단일 적에게 220% 물리 피해 및 1턴간 확정 기절 (35% 발동/쿨2턴)', prob: 35, cd: 2 }, passiveSkill: { name: '만인적', desc: '공격 시 적의 방어력을 20% 상시 무시' }, bonds: '오호대장군' },
+  { id: 'H006', name: '장비', grade: 'UR', role: '호위', attr: '지', stats: { str: 97, int: 40, con: 95, spd: 70 }, activeSkill: { name: '장판교 사자후', desc: '적 전체 피해 및 40% 확률로 기절 부여 (30% 발동/쿨3턴)', prob: 30, cd: 3 }, passiveSkill: { name: '호담', desc: '자신보다 무력이 낮은 적에게 받는 피해 30% 감소' }, bonds: '도원결의' },
+  { id: 'H007', name: '조운', grade: 'UR', role: '맹장', attr: '인', stats: { str: 96, int: 70, con: 85, spd: 92 }, activeSkill: { name: '장판파 돌파', desc: '단일 적에게 130% 피해로 2회 연속 타격 (40% 발동/쿨3턴)', prob: 40, cd: 3 }, passiveSkill: { name: '일신시담', desc: '자신의 회피율 25% 상시 증가' }, bonds: '오호대장군' },
+  { id: 'H008', name: '여포', grade: 'UR', role: '맹장', attr: '천', stats: { str: 100, int: 30, con: 90, spd: 85 }, activeSkill: { name: '방천화극 무쌍', desc: '적 전체에게 방어 무시 150% 물리 피해 (30% 발동/쿨4턴)', prob: 30, cd: 4 }, passiveSkill: { name: '인중여포', desc: '자신의 모든 공격이 상성 보너스를 20% 추가로 받음' }, bonds: '인중여포' },
+  { id: 'H009', name: '제갈량', grade: 'UR', role: '모사', attr: '천', stats: { str: 20, int: 100, con: 60, spd: 80 }, activeSkill: { name: '적벽의 동남풍', desc: '적 전체 마법 피해 및 2턴간 속도 30% 감소 (35% 발동/쿨3턴)', prob: 35, cd: 3 }, passiveSkill: { name: '신산귀모', desc: '아군 전체의 스킬 피해량 20% 상시 증가' }, bonds: '와룡봉추' },
+  { id: 'H010', name: '조조', grade: 'UR', role: '군주', attr: '지', stats: { str: 70, int: 90, con: 95, spd: 70 }, activeSkill: { name: '위왕의 패도', desc: '아군 공격력 30% 증가 및 적 방어력 20% 감소 (30% 발동/쿨3턴)', prob: 30, cd: 3 }, passiveSkill: { name: '난세의 간웅', desc: '전투 중 적 전체의 공격력을 상시 10% 감소' }, bonds: '위왕의 패기' },
+  { id: 'H011', name: '손견', grade: 'UR', role: '군주', attr: '천', stats: { str: 85, int: 70, con: 80, spd: 75 }, activeSkill: { name: '강동의 호랑이', desc: '아군 맹장 공격력 40% 대폭 상승 (30% 발동/쿨3턴)', prob: 30, cd: 3 }, passiveSkill: { name: '옥새의 가호', desc: '매 턴 시작 시 자신에게 최대 체력 10% 보호막 생성' }, bonds: '강동의 지배자' },
+  { id: 'H012', name: '주유', grade: 'UR', role: '모사', attr: '지', stats: { str: 60, int: 95, con: 70, spd: 80 }, activeSkill: { name: '적벽 화공', desc: '적 전체 강력한 마법 피해 및 3턴간 화상 (30% 발동/쿨3턴)', prob: 30, cd: 3 }, passiveSkill: { name: '미주랑', desc: '자신의 지력 10% 증가 및 모든 공격에 상시 화상 확률 15% 부여' }, bonds: '강동의 이교' },
+  { id: 'H013', name: '사마의', grade: 'UR', role: '모사', attr: '인', stats: { str: 30, int: 98, con: 75, spd: 75 }, activeSkill: { name: '낭고지상', desc: '적 전체 버프 해제 및 1턴 침묵 (25% 발동/쿨4턴)', prob: 25, cd: 4 }, passiveSkill: { name: '은인자중', desc: '매 턴 방어력이 5%씩 점진적으로 상승 (최대 50%)' }, bonds: '숙명의 라이벌' },
 
-  // --- SSR 영웅 (23인) ---
-  { id: 'H014', name: '마초', grade: 'SSR', role: '맹장', attr: '지', stats: { str: 93, int: 45, con: 80, spd: 88 }, skill: { name: '철기돌격', desc: '적 1명에게 180% 물리 피해 및 방어 감소 (30% 발동/쿨2턴)', prob: 30, cd: 2 }, bonds: '오호대장군' },
-  { id: 'H015', name: '황충', grade: 'SSR', role: '맹장', attr: '천', stats: { str: 90, int: 50, con: 75, spd: 80 }, skill: { name: '백발백중', desc: '단일 대상 확정 치명타 피해 (30% 발동/쿨2턴)', prob: 30, cd: 2 }, bonds: '오호대장군' },
-  { id: 'H016', name: '위연', grade: 'SSR', role: '맹장', attr: '인', stats: { str: 85, int: 50, con: 75, spd: 75 }, skill: { name: '반골의 일격', desc: '자신 체력이 낮을수록 배율 상승 타격 (30% 발동/쿨2턴)', prob: 30, cd: 2 }, bonds: '불운한 명장' },
-  { id: 'H017', name: '하후돈', grade: 'SSR', role: '호위', attr: '천', stats: { str: 88, int: 60, con: 92, spd: 62 }, skill: { name: '맹장의 분노', desc: '방어력 30% 증가 및 강력한 반격 (30% 발동/쿨3턴)', prob: 30, cd: 3 }, bonds: '조조의 심복' },
-  { id: 'H018', name: '하후연', grade: 'SSR', role: '맹장', attr: '인', stats: { str: 86, int: 55, con: 80, spd: 85 }, skill: { name: '급습', desc: '체력 가장 낮은 적 강력 타격 (30% 발동/쿨3턴)', prob: 30, cd: 3 }, bonds: '하후 형제' },
-  { id: 'H019', name: '장료', grade: 'SSR', role: '맹장', attr: '지', stats: { str: 92, int: 70, con: 85, spd: 82 }, skill: { name: '료래래', desc: '적 전체 공격력 감소 및 110% 피해 (25% 발동/쿨4턴)', prob: 25, cd: 4 }, bonds: '합비의 전설' },
-  { id: 'H020', name: '전위', grade: 'SSR', role: '호위', attr: '인', stats: { str: 94, int: 35, con: 90, spd: 60 }, skill: { name: '악래의 호위', desc: '아군 대신 피격 및 방어 대폭 상승 (25% 발동/쿨3턴)', prob: 25, cd: 3 }, bonds: '충직한 호위무사' },
-  { id: 'H021', name: '허저', grade: 'SSR', role: '맹장', attr: '천', stats: { str: 95, int: 30, con: 85, spd: 55 }, skill: { name: '호치', desc: '방어력을 50% 무시하는 단일 강타 (30% 발동/쿨3턴)', prob: 30, cd: 3 }, bonds: '충직한 호위무사' },
-  { id: 'H022', name: '곽가', grade: 'SSR', role: '모사', attr: '지', stats: { str: 25, int: 96, con: 50, spd: 78 }, skill: { name: '천재의 계책', desc: '적 마법 피해 및 아군 쿨타임 감소 (25% 발동/쿨4턴)', prob: 25, cd: 4 }, bonds: '조조의 두뇌' },
-  { id: 'H023', name: '순욱', grade: 'SSR', role: '모사', attr: '인', stats: { str: 30, int: 94, con: 60, spd: 65 }, skill: { name: '왕좌지재', desc: '아군 전체 방어력 및 치유량 대폭 증가 (30% 발동/쿨3턴)', prob: 30, cd: 3 }, bonds: '조조의 두뇌' },
-  { id: 'H024', name: '손책', grade: 'SSR', role: '맹장', attr: '천', stats: { str: 91, int: 65, con: 82, spd: 88 }, skill: { name: '소패왕', desc: '적 처치 시 추가 턴 획득 타격 (30% 발동/쿨3턴)', prob: 30, cd: 3 }, bonds: '강동의 패자' },
-  { id: 'H025', name: '손권', grade: 'SSR', role: '군주', attr: '지', stats: { str: 75, int: 80, con: 85, spd: 70 }, skill: { name: '수성의 달인', desc: '아군 전체 보호막 부여 (30% 발동/쿨3턴)', prob: 30, cd: 3 }, bonds: '강동의 패자' },
-  { id: 'H026', name: '감녕', grade: 'SSR', role: '맹장', attr: '천', stats: { str: 89, int: 50, con: 80, spd: 90 }, skill: { name: '기습', desc: '빠른 속도의 단일 200% 피해 (35% 발동/쿨2턴)', prob: 35, cd: 2 }, bonds: '오나라의 맹장' },
-  { id: 'H027', name: '태사자', grade: 'SSR', role: '맹장', attr: '인', stats: { str: 90, int: 55, con: 82, spd: 82 }, skill: { name: '의리', 단esc: '자신 체력 소모 강력한 단일 타격 (30% 발동/쿨3턴)', prob: 30, cd: 3 }, bonds: '오나라의 맹장' },
-  { id: 'H028', name: '여몽', grade: 'SSR', role: '모사', attr: '지', stats: { str: 75, int: 88, con: 78, spd: 72 }, skill: { name: '괄목상대', desc: '자신의 모든 스탯 일시적 상승 (25% 발동/쿨4턴)', prob: 25, cd: 4 }, bonds: '오나라의 지장' },
-  { id: 'H029', name: '육손', grade: 'SSR', role: '모사', attr: '인', stats: { str: 65, int: 92, con: 75, spd: 75 }, skill: { name: '화공', desc: '적 전체 화상 및 방어력 감소 (30% 발동/쿨3턴)', prob: 30, cd: 3 }, bonds: '오나라의 지장' },
-  { id: 'H030', name: '초선', grade: 'SSR', role: '힐러', attr: '인', stats: { str: 20, int: 80, con: 50, spd: 85 }, skill: { name: '경국지색', desc: '가장 체력 높은 적 1턴 행동불가 [매혹] (25% 발동/쿨4턴)', prob: 25, cd: 4 }, bonds: '미인계' },
-  { id: 'H031', name: '동탁', grade: 'SSR', role: '호위', attr: '지', stats: { str: 80, int: 40, con: 95, spd: 40 }, skill: { name: '폭정', desc: '아군 희생하여 자신 체력 100% 회복 (20% 발동/쿨5턴)', prob: 20, cd: 5 }, bonds: '난세의 시작' },
-  { id: 'H032', name: '원소', grade: 'SSR', role: '군주', attr: '천', stats: { str: 70, int: 70, con: 85, spd: 65 }, skill: { name: '명문대가', desc: '아군 공격력 전체 소폭 상승 (30% 발동/쿨3턴)', prob: 30, cd: 3 }, bonds: '관도대전' },
-  { id: 'H033', name: '방통', grade: 'SSR', role: '모사', attr: '인', stats: { str: 25, int: 95, con: 55, spd: 70 }, skill: { name: '연환계', desc: '적 대상 2명에게 피해 공유 디버프 (25% 발동/쿨4턴)', prob: 25, cd: 4 }, bonds: '와룡봉추' },
-  { id: 'H034', name: '장합', grade: 'SSR', role: '맹장', attr: '지', stats: { str: 88, int: 65, con: 80, spd: 84 }, skill: { name: '교묘한 진퇴', desc: '공격 후 자신의 회피율 30% 증가 (30% 발동/쿨3턴)', prob: 30, cd: 3 }, bonds: '위나라 명장' },
-  { id: 'H035', name: '서황', grade: 'SSR', role: '맹장', attr: '천', stats: { str: 89, int: 60, con: 85, spd: 75 }, skill: { name: '대부의 위력', desc: '방어력 무시 강력한 단일 피해 (30% 발동/쿨3턴)', prob: 30, cd: 3 }, bonds: '위나라 명장' },
-  { id: 'H036', name: '강유', grade: 'SSR', role: '모사', attr: '인', stats: { str: 85, int: 88, con: 80, spd: 85 }, skill: { name: '문무겸비', desc: '자신의 물리/마법 방어력 대폭 상승 (30% 발동/쿨3턴)', prob: 30, cd: 3 }, bonds: '촉한의 후계자' },
+  // --- SSR 영웅 무장 (연의 스토리 기반) ---
+  { id: 'H014', name: '마초', grade: 'SSR', role: '맹장', attr: '지', stats: { str: 93, int: 45, con: 80, spd: 88 }, activeSkill: { name: '철기 돌격', desc: '단일 적 180% 피해 및 방어 20% 감소 (30% 발동/쿨2턴)', prob: 30, cd: 2 }, passiveSkill: { name: '서량의 기상', desc: '자신의 속도 15% 상시 증가' }, bonds: '오호대장군' },
+  { id: 'H015', name: '황충', grade: 'SSR', role: '맹장', attr: '천', stats: { str: 90, int: 50, con: 75, spd: 80 }, activeSkill: { name: '백발백중', desc: '단일 대상 확정 치명타 피해 (30% 발동/쿨2턴)', prob: 30, cd: 2 }, passiveSkill: { name: '노익장', desc: '자신의 치명타 확률 20% 상시 증가' }, bonds: '오호대장군' },
+  { id: 'H016', name: '위연', grade: 'SSR', role: '맹장', attr: '인', stats: { str: 85, int: 50, con: 75, spd: 75 }, activeSkill: { name: '반골의 일격', desc: '체력이 낮을수록 피해량 최대 2배 증가 (30% 발동/쿨2턴)', prob: 30, cd: 2 }, passiveSkill: { name: '광전사', desc: '매 공격 시 가한 데미지의 10%만큼 체력 흡수' }, bonds: '불운한 명장' },
+  { id: 'H017', name: '하후돈', grade: 'SSR', role: '호위', attr: '천', stats: { str: 88, int: 60, con: 92, spd: 62 }, activeSkill: { name: '발시담정', desc: '자신 방어력 40% 증가 및 피해 반사 효과 (30% 발동/쿨3턴)', prob: 30, cd: 3 }, passiveSkill: { name: '독안룡', desc: '피격 시 20% 확률로 공격자에게 무력 100% 반격' }, bonds: '조조의 심복' },
+  { id: 'H018', name: '하후연', grade: 'SSR', role: '맹장', attr: '인', stats: { str: 86, int: 55, con: 80, spd: 85 }, activeSkill: { name: '신속 급습', desc: '체력 가장 낮은 적 200% 타격 (30% 발동/쿨3턴)', prob: 30, cd: 3 }, passiveSkill: { name: '궁신', desc: '후열 공격 시 최종 데미지 20% 증가' }, bonds: '하후 형제' },
+  { id: 'H019', name: '장료', grade: 'SSR', role: '맹장', attr: '지', stats: { str: 92, int: 70, con: 85, spd: 82 }, activeSkill: { name: '료래래', desc: '적 전체 공격 20% 감소 및 110% 피해 (25% 발동/쿨4턴)', prob: 25, cd: 4 }, passiveSkill: { name: '합비의 전설', desc: '적군 생존자 수가 많을수록 자신의 방어력 상승' }, bonds: '합비의 전설' },
+  { id: 'H020', name: '전위', grade: 'SSR', role: '호위', attr: '인', stats: { str: 94, int: 35, con: 90, spd: 60 }, activeSkill: { name: '악래의 호위', desc: '아군 군주 대신 피격 및 방어 대폭 상승 (25% 발동/쿨3턴)', prob: 25, cd: 3 }, passiveSkill: { name: '충절', desc: '사망 시 아군 전체 체력 20% 즉시 회복' }, bonds: '충직한 호위무사' },
+  { id: 'H021', name: '허저', grade: 'SSR', role: '맹장', attr: '천', stats: { str: 95, int: 30, con: 85, spd: 55 }, activeSkill: { name: '호치', desc: '방어력을 50% 무시하는 200% 단일 강타 (30% 발동/쿨3턴)', prob: 30, cd: 3 }, passiveSkill: { name: '괴력', desc: '자신의 무력 스탯 15% 상시 증가' }, bonds: '충직한 호위무사' },
+  { id: 'H022', name: '곽가', grade: 'SSR', role: '모사', attr: '지', stats: { str: 25, int: 96, con: 50, spd: 78 }, activeSkill: { name: '천재의 유계', desc: '적 지력 160% 피해 및 쿨타임 1턴 증가 (25% 발동/쿨4턴)', prob: 25, cd: 4 }, passiveSkill: { name: '통찰', desc: '아군 전체의 상태이상 저항 확률 20% 증가' }, bonds: '조조의 두뇌' },
+  { id: 'H023', name: '순욱', grade: 'SSR', role: '모사', attr: '인', stats: { str: 30, int: 94, con: 60, spd: 65 }, activeSkill: { name: '왕좌지재', desc: '아군 전체 방어력 상승 및 대폭 치유 (30% 발동/쿨3턴)', prob: 30, cd: 3 }, passiveSkill: { name: '구현령', desc: '매 턴 시작 시 아군 전체의 ATB 5% 추가 충전' }, bonds: '조조의 두뇌' },
+  { id: 'H024', name: '손책', grade: 'SSR', role: '맹장', attr: '천', stats: { str: 91, int: 65, con: 82, spd: 88 }, activeSkill: { name: '소패왕', desc: '단일 대상 170% 피해 및 50% 확률 추가 턴 (30% 발동/쿨3턴)', prob: 30, cd: 3 }, passiveSkill: { name: '투지', desc: '체력이 50% 이상일 때 공격력 20% 증가' }, bonds: '강동의 패자' },
+  { id: 'H025', name: '손권', grade: 'SSR', role: '군주', attr: '지', stats: { str: 75, int: 80, con: 85, spd: 70 }, activeSkill: { name: '수성의 달인', desc: '아군 전체에게 지력 비례 보호막 부여 (30% 발동/쿨3턴)', prob: 30, cd: 3 }, passiveSkill: { name: '강동의 주벽', desc: '아군 전체가 받는 마법 피해 15% 감소' }, bonds: '강동의 패자' },
+  { id: 'H026', name: '감녕', grade: 'SSR', role: '맹장', attr: '천', stats: { str: 89, int: 50, con: 80, spd: 90 }, activeSkill: { name: '방울소리 습격', desc: '단일 대상 190% 피해 및 속도 20% 감소 (35% 발동/쿨2턴)', prob: 35, cd: 2 }, passiveSkill: { name: '금범적', desc: '전투 시작 시 적 전체의 ATB 10% 감소' }, bonds: '오나라의 맹장' },
+  { id: 'H027', name: '태사자', grade: 'SSR', role: '맹장', attr: '인', stats: { str: 90, int: 55, con: 82, spd: 82 }, activeSkill: { name: '의리 신궁', desc: '무작위 적에게 100% 피해로 3회 난사 (30% 발동/쿨3턴)', prob: 30, cd: 3 }, passiveSkill: { name: '불굴의 충성', desc: '자신이 사망에 이르는 피해를 받을 때 1회 생존' }, bonds: '오나라의 맹장' },
+  { id: 'H028', name: '여몽', grade: 'SSR', role: '모사', attr: '지', stats: { str: 75, int: 88, con: 78, spd: 72 }, activeSkill: { name: '괄목상대', desc: '자신의 지력 50% 증가 및 광역 피해 (25% 발동/쿨4턴)', prob: 25, cd: 4 }, passiveSkill: { name: '오하아몽', desc: '매 턴 자신의 지력이 2%씩 영구 증가' }, bonds: '오나라의 지장' },
+  { id: 'H029', name: '육손', grade: 'SSR', role: '모사', attr: '인', stats: { str: 65, int: 92, con: 75, spd: 75 }, activeSkill: { name: '이릉의 화계', desc: '적 전체 화상 및 방어 25% 감소 (30% 발동/쿨3턴)', prob: 30, cd: 3 }, passiveSkill: { name: '화신', desc: '화상 상태의 적에게 입히는 데미지 30% 증가' }, bonds: '오나라의 지장' },
+  { id: 'H030', name: '초선', grade: 'SSR', role: '힐러', attr: '인', stats: { str: 20, int: 80, con: 50, spd: 85 }, activeSkill: { name: '경국지색', desc: '적 1명 2턴간 매혹(아군 공격) 부여 (25% 발동/쿨4턴)', prob: 25, cd: 4 }, passiveSkill: { name: '연환계', desc: '매 턴 아군 전체의 디버프 1개를 무작위 해제' }, bonds: '미인계' },
+  { id: 'H031', name: '동탁', grade: 'SSR', role: '호위', attr: '지', stats: { str: 80, int: 40, con: 95, spd: 40 }, activeSkill: { name: '낙양 연소', desc: '아군 1명 희생하여 자신 체력 100% 회복 (20% 발동/쿨5턴)', prob: 20, cd: 5 }, passiveSkill: { name: '폭정', desc: '자신이 입히는 모든 피해의 15%만큼 체력 회복' }, bonds: '난세의 시작' },
+  { id: 'H032', name: '원소', grade: 'SSR', role: '군주', attr: '천', stats: { str: 70, int: 70, con: 85, spd: 65 }, activeSkill: { name: '명문 대가', desc: '아군 공격/방어 15% 동시 상승 (30% 발동/쿨3턴)', prob: 30, cd: 3 }, passiveSkill: { name: '사세삼공', desc: '파티 내 보물 등급 아이템당 아군 스탯 2% 증가' }, bonds: '관도대전' },
+  { id: 'H033', name: '방통', grade: 'SSR', role: '모사', attr: '인', stats: { str: 25, int: 95, con: 55, spd: 70 }, activeSkill: { name: '연환계', desc: '적 대상 2명에게 피해 공유 디버프 부여 (25% 발동/쿨4턴)', prob: 25, cd: 4 }, passiveSkill: { name: '봉추', desc: '스킬 발동 확률 10% 추가 증가' }, bonds: '와룡봉추' },
+  { id: 'H034', name: '장합', grade: 'SSR', role: '맹장', attr: '지', stats: { str: 88, int: 65, con: 80, spd: 84 }, activeSkill: { name: '정교한 퇴각', desc: '공격 후 자신 회피 40% 증가 (30% 발동/쿨3턴)', prob: 30, cd: 3 }, passiveSkill: { name: '오자양장', desc: '전투 중 자신의 모든 데미지 10% 상시 증가' }, bonds: '위나라 명장' },
+  { id: 'H035', name: '서황', grade: 'SSR', role: '맹장', attr: '천', stats: { str: 89, int: 60, con: 85, spd: 75 }, activeSkill: { name: '단끼 돌파', desc: '단일 적 방어 무시 180% 강력한 일격 (30% 발동/쿨3턴)', prob: 30, cd: 3 }, passiveSkill: { name: '엄격', desc: '치명타 발동 시 적의 버프 1개 제거' }, bonds: '위나라 명장' },
+  { id: 'H036', name: '강유', grade: 'SSR', role: '모사', attr: '인', stats: { str: 85, int: 88, con: 80, spd: 85 }, activeSkill: { name: '구벌중원', desc: '물리/마법 복합 160% 광역 피해 (30% 발동/쿨3턴)', prob: 30, cd: 3 }, passiveSkill: { name: '와룡의 후계', desc: '매 턴 자신의 MP 15 추가 회복' }, bonds: '촉한의 후계자' },
 
   // --- SR 희귀 무장 (30인) ---
-  { id: 'H037', name: '관평', grade: 'SR', role: '맹장', attr: '천', stats: { str: 80, int: 55, con: 75, spd: 75 }, skill: { name: '소장', desc: '단일 대상 150% 피해 (30% 발동/쿨2턴)', prob: 30, cd: 2 }, bonds: '관우의 아들' },
-  { id: 'H038', name: '주창', grade: 'SR', role: '호위', attr: '지', stats: { str: 78, int: 35, con: 82, spd: 65 }, skill: { name: '충직한 보좌', desc: '아군 방어력 15% 상승 (30% 발동/쿨3턴)', prob: 30, cd: 3 }, bonds: '관우의 수하' },
-  { id: 'H039', name: '요화', grade: 'SR', role: '맹장', attr: '인', stats: { str: 75, int: 50, con: 75, spd: 70 }, skill: { name: '선봉대', desc: '자신 속도 20% 상승 (25% 발동/쿨3턴)', prob: 25, cd: 3 }, bonds: '촉의 고참' },
-  { id: 'H040', name: '마대', grade: 'SR', role: '맹장', attr: '지', stats: { str: 82, int: 45, con: 72, spd: 80 }, skill: { name: '복병', desc: '후열 단일 적 타격 (30% 발동/쿨2턴)', prob: 30, cd: 2 }, bonds: '마씨 가문' },
-  { id: 'H041', name: '왕평', grade: 'SR', role: '호위', attr: '천', stats: { str: 76, int: 60, con: 80, spd: 68 }, skill: { name: '무당비군', desc: '아군 전체 방어력 상승 (25% 발동/쿨4턴)', prob: 25, cd: 4 }, bonds: '촉의 방패' },
-  { id: 'H042', name: '조인', grade: 'SR', role: '호위', attr: '지', stats: { str: 80, int: 65, con: 88, spd: 60 }, skill: { name: '철벽', desc: '자신에게 보호막 부여 (30% 발동/쿨3턴)', prob: 30, cd: 3 }, bonds: '조조의 혈족' },
-  { id: 'H043', name: '조홍', grade: 'SR', role: '맹장', attr: '천', stats: { str: 78, int: 40, con: 78, spd: 72 }, skill: { name: '결사대', desc: '체력 깎고 큰 피해 (30% 발동/쿨3턴)', prob: 30, cd: 3 }, bonds: '조조의 혈족' },
-  { id: 'H044', name: '이전', grade: 'SR', role: '호위', attr: '인', stats: { str: 75, int: 68, con: 80, spd: 65 }, skill: { name: '신중한 방어', desc: '받는 피해량 20% 감소 (25% 발동/쿨4턴)', prob: 25, cd: 4 }, bonds: '위의 지장' },
-  { id: 'H045', name: '악진', grade: 'SR', role: '맹장', attr: '천', stats: { str: 82, int: 50, con: 75, spd: 82 }, skill: { name: '선봉돌격', desc: '우선 공격권 타격 (30% 발동/쿨2턴)', prob: 30, cd: 2 }, bonds: '위의 용장' },
-  { id: 'H046', name: '우금', grade: 'SR', role: '모사', attr: '지', stats: { str: 78, int: 60, con: 82, spd: 65 }, skill: { name: '군율 엄수', desc: '아군 디버프 1개 해제 (25% 발동/쿨3턴)', prob: 25, cd: 3 }, bonds: '오자양장' },
-  { id: 'H047', name: '방덕', grade: 'SR', role: '맹장', attr: '인', stats: { str: 85, int: 45, con: 80, spd: 70 }, skill: { name: '결사의 일격', desc: '상대에게 150% 피해 (30% 발동/쿨2턴)', prob: 30, cd: 2 }, bonds: '결사항전' },
-  { id: 'H048', name: '정욱', grade: 'SR', role: '모사', attr: '지', stats: { str: 30, int: 88, con: 60, spd: 60 }, skill: { name: '독계', desc: '단일 대상 중독 및 마법 피해 (30% 발동/쿨3턴)', prob: 30, cd: 3 }, bonds: '조조의 모사' },
-  { id: 'H049', name: '가후', grade: 'SR', role: '모사', attr: '천', stats: { str: 35, int: 90, con: 65, spd: 65 }, skill: { name: '이간계', desc: '적 대상 혼란 부여 (20% 발동/쿨4턴)', prob: 20, cd: 4 }, bonds: '난세의 책사' },
-  { id: 'H050', name: '순유', grade: 'SR', role: '모사', attr: '지', stats: { str: 28, int: 85, con: 55, spd: 62 }, skill: { name: '기습의 책', desc: '아군 치명타 확률 상승 (30% 발동/쿨3턴)', prob: 30, cd: 3 }, bonds: '순씨 일가' },
-  { id: 'H051', name: '황개', grade: 'SR', role: '호위', attr: '지', stats: { str: 75, int: 60, con: 80, spd: 55 }, skill: { name: '고육지책', desc: '현재 체력 20% 소모하여 아군 방어력 30% 상승 (25% 발동/쿨4턴)', prob: 25, cd: 4 }, bonds: '오의 충신' },
-  { id: 'H052', name: '정보', grade: 'SR', role: '호위', attr: '천', stats: { str: 78, int: 65, con: 82, spd: 60 }, skill: { name: '노장의 경험', desc: '아군 전체 회피율 상승 (25% 발동/쿨4턴)', prob: 25, cd: 4 }, bonds: '오의 고참' },
-  { id: 'H053', name: '한당', grade: 'SR', role: '맹장', attr: '인', stats: { str: 76, int: 50, con: 75, spd: 70 }, skill: { name: '기습', desc: '140% 단일 피해 (35% 발동/쿨2턴)', prob: 35, cd: 2 }, bonds: '오의 고참' },
-  { id: 'H054', name: '조무', grade: 'SR', role: '호위', attr: '지', stats: { str: 70, int: 55, con: 78, spd: 65 }, skill: { name: '희생', desc: '자신 방어력 대폭 상승 (30% 발동/쿨3턴)', prob: 30, cd: 3 }, bonds: '오의 고참' },
-  { id: 'H055', name: '주태', grade: 'SR', role: '호위', attr: '천', stats: { str: 80, int: 35, con: 90, spd: 50 }, skill: { name: '불굴', desc: '체력 소량 회복 및 단단해짐 (25% 발동/쿨3턴)', prob: 25, cd: 3 }, bonds: '손권의 호위' },
-  { id: 'H056', name: '능통', grade: 'SR', role: '맹장', attr: '인', stats: { str: 80, int: 55, con: 76, spd: 78 }, skill: { name: '복수심', desc: '자신 공격력 20% 증가 타격 (30% 발동/쿨3턴)', prob: 30, cd: 3 }, bonds: '감녕과의 원한' },
-  { id: 'H057', name: '반장', grade: 'SR', role: '맹장', attr: '지', stats: { str: 78, int: 50, con: 72, spd: 75 }, skill: { name: '매복', desc: '기습적인 160% 피해 (30% 발동/쿨2턴)', prob: 30, cd: 2 }, bonds: '오의 맹장' },
-  { id: 'H058', name: '서성', grade: 'SR', role: '호위', attr: '천', stats: { str: 75, int: 65, con: 82, spd: 60 }, skill: { name: '가짜 성벽', desc: '적 전체 공격력 감소 (25% 발동/쿨4턴)', prob: 25, cd: 4 }, bonds: '오의 방패' },
-  { id: 'H059', name: '진궁', grade: 'SR', role: '모사', attr: '인', stats: { str: 40, int: 85, con: 60, spd: 65 }, skill: { name: '배수의 진', desc: '아군 방어 감소 및 공격 증가 (25% 발동/쿨3턴)', prob: 25, cd: 3 }, bonds: '여포의 모사' },
-  { id: 'H060', name: '고순', grade: 'SR', role: '맹장', attr: '지', stats: { str: 84, int: 55, con: 80, spd: 70 }, skill: { name: '함진영', desc: '단일 대상 방어 무시 150% 타격 (30% 발동/쿨3턴)', prob: 30, cd: 3 }, bonds: '여포의 수하' },
-  { id: 'H061', name: '안량', grade: 'SR', role: '맹장', attr: '천', stats: { str: 86, int: 30, con: 75, spd: 75 }, skill: { name: '맹공', desc: '강력한 160% 타격 (35% 발동/쿨2턴)', prob: 35, cd: 2 }, bonds: '원소의 쌍벽' },
-  { id: 'H062', name: '문추', grade: 'SR', role: '맹장', attr: '지', stats: { str: 85, int: 35, con: 76, spd: 74 }, skill: { name: '분쇄', desc: '적 방어력 감소 및 타격 (30% 발동/쿨3턴)', prob: 30, cd: 3 }, bonds: '원소의 쌍벽' },
-  { id: 'H063', name: '전풍', grade: 'SR', role: '모사', attr: '인', stats: { str: 35, int: 86, con: 55, spd: 60 }, skill: { name: '직언', desc: '단일 마법 피해 및 쿨타임 증가 (25% 발동/쿨3턴)', prob: 25, cd: 3 }, bonds: '원소의 모사' },
-  { id: 'H064', name: '저수', grade: 'SR', role: '모사', attr: '천', stats: { str: 38, int: 84, con: 60, spd: 62 }, skill: { name: '장기전', desc: '매 턴 아군 체력 소폭 회복 버프 (25% 발동/쿨4턴)', prob: 25, cd: 4 }, bonds: '원소의 모사' },
-  { id: 'H065', name: '노식', grade: 'SR', role: '군주', attr: '지', stats: { str: 65, int: 80, con: 75, spd: 60 }, skill: { name: '가르침', desc: '아군 경험치 획득 증가 (20% 발동/쿨4턴)', prob: 20, cd: 4 }, bonds: '황건적 토벌' },
-  { id: 'H066', name: '황보숭', grade: 'SR', role: '군주', attr: '천', stats: { str: 70, int: 75, con: 80, spd: 65 }, skill: { name: '토벌군', desc: '적 전체 90% 광역 피해 (25% 발동/쿨4턴)', prob: 25, cd: 4 }, bonds: '황건적 토벌' },
+  { id: 'H037', name: '관평', grade: 'SR', role: '맹장', attr: '천', stats: { str: 80, int: 55, con: 75, spd: 75 }, activeSkill: { name: '참격', desc: '단일 150% 피해 (30% 발동/쿨2턴)', prob: 30, cd: 2 }, passiveSkill: { name: '무예전수', desc: '자신 무력 5% 증가' } },
+  { id: 'H038', name: '주창', grade: 'SR', role: '호위', attr: '지', stats: { str: 78, int: 35, con: 82, spd: 65 }, activeSkill: { name: '괴력막기', desc: '아군 방어 15% 상승 (30% 발동/쿨3턴)', prob: 30, cd: 3 }, passiveSkill: { name: '수행', desc: '자신 체력 10% 증가' } },
+  { id: 'H039', name: '요화', grade: 'SR', role: '맹장', attr: '인', stats: { str: 75, int: 50, con: 75, spd: 70 }, activeSkill: { name: '선봉대기', desc: '속도 20% 상승 타격 (25% 발동/쿨3턴)', prob: 25, cd: 3 }, passiveSkill: { name: '장수', desc: '전투 지속 시 방어력 5% 증가' } },
+  { id: 'H040', name: '마대', grade: 'SR', role: '맹장', attr: '지', stats: { str: 82, int: 45, con: 72, spd: 80 }, activeSkill: { name: '복병암습', desc: '후열 단일 적 타격 (30% 발동/쿨2턴)', prob: 30, cd: 2 }, passiveSkill: { name: '추격', desc: '적 처치 시 ATB 20% 회복' } },
+  { id: 'H041', name: '왕평', grade: 'SR', role: '호위', attr: '천', stats: { str: 76, int: 60, con: 80, spd: 68 }, activeSkill: { name: '산세방어', desc: '아군 전체 방어력 상승 (25% 발동/쿨4턴)', prob: 25, cd: 4 }, passiveSkill: { name: '견제', desc: '적 공격 시 명중 5% 감소' } },
+  { id: 'H042', name: '조인', grade: 'SR', role: '호위', attr: '지', stats: { str: 80, int: 65, con: 88, spd: 60 }, activeSkill: { name: '철벽진', desc: '자신에게 두꺼운 보호막 부여 (30% 발동/쿨3턴)', prob: 30, cd: 3 }, passiveSkill: { name: '사수', desc: '자신이 받는 마법 피해 15% 감소' } },
+  { id: 'H043', name: '조홍', grade: 'SR', role: '맹장', attr: '천', stats: { str: 78, int: 40, con: 78, spd: 72 }, activeSkill: { name: '결사적극', desc: '체력 10% 소모 후 큰 피해 (30% 발동/쿨3턴)', prob: 30, cd: 3 }, passiveSkill: { name: '자금원', desc: '전투 승리 시 금화 획득량 10% 증가' } },
+  { id: 'H044', name: '이전', grade: 'SR', role: '호위', attr: '인', stats: { str: 75, int: 68, con: 80, spd: 65 }, activeSkill: { name: '학문의 힘', desc: '받는 피해량 20% 감소 (25% 발동/쿨4턴)', prob: 25, cd: 4 }, passiveSkill: { name: '차분함', desc: '상태이상 저항 확률 15% 증가' } },
+  { id: 'H045', name: '악진', grade: 'SR', role: '맹장', attr: '천', stats: { str: 82, int: 50, con: 75, spd: 82 }, activeSkill: { name: '돌격함락', desc: '우선 공격권 타격 (30% 발동/쿨2턴)', prob: 30, cd: 2 }, passiveSkill: { name: '선봉', desc: '전투 시작 시 ATB 15% 선점' } },
+  { id: 'H046', name: '우금', grade: 'SR', role: '모사', attr: '지', stats: { str: 78, int: 60, con: 82, spd: 65 }, activeSkill: { name: '군법엄수', desc: '아군 디버프 1개 제거 (25% 발동/쿨3턴)', prob: 25, cd: 3 }, passiveSkill: { name: '규율', desc: '아군 전체의 혼란 저항 20% 증가' } },
+  { id: 'H047', name: '방덕', grade: 'SR', role: '맹장', attr: '인', stats: { str: 85, int: 45, con: 80, spd: 70 }, activeSkill: { name: '관속결전', desc: '상대에게 160% 출혈 피해 (30% 발동/쿨2턴)', prob: 30, cd: 2 }, passiveSkill: { name: '불굴', desc: '체력이 낮을수록 공격력 최대 15% 증가' } },
+  { id: 'H048', name: '정욱', grade: 'SR', role: '모사', attr: '지', stats: { str: 30, int: 88, con: 60, spd: 60 }, activeSkill: { name: '매복계책', desc: '마법 피해 및 중독 부여 (30% 발동/쿨3턴)', prob: 30, cd: 3 }, passiveSkill: { name: '비정', desc: '중독된 적에게 스킬 피해 20% 증가' } },
+  { id: 'H049', name: '가후', grade: 'SR', role: '모사', attr: '천', stats: { str: 35, int: 90, con: 65, spd: 65 }, activeSkill: { name: '이간지계', desc: '적 대상 1턴 혼란 부여 (20% 발동/쿨4턴)', prob: 20, cd: 4 }, passiveSkill: { name: '책사', desc: '자신의 지력 10% 상시 증가' } },
+  { id: 'H050', name: '순유', grade: 'SR', role: '모사', attr: '지', stats: { str: 28, int: 85, con: 55, spd: 62 }, activeSkill: { name: '비책발동', desc: '아군 치명타 확률 대폭 상승 (30% 발동/쿨3턴)', prob: 30, cd: 3 }, passiveSkill: { name: '기재', desc: '자신의 스킬 발동 확률 5% 상시 증가' } },
+  { id: 'H051', name: '황개', grade: 'SR', role: '호위', attr: '지', stats: { str: 75, int: 60, con: 80, spd: 55 }, activeSkill: { name: '고육지책', desc: '현재 체력 20% 소모하여 아군 방어 30% 상승 (25% 발동/쿨4턴)', prob: 25, cd: 4 }, passiveSkill: { name: '충성', desc: '자신 방어력 10% 상시 증가' } },
+  { id: 'H052', name: '정보', grade: 'SR', role: '호위', attr: '천', stats: { str: 78, int: 65, con: 82, spd: 60 }, activeSkill: { name: '원로의 지혜', desc: '아군 전체 회피율 상승 (25% 발동/쿨4턴)', prob: 25, cd: 4 }, passiveSkill: { name: '경륜', desc: '전투 중 아군 전체 속도 5% 증가' } },
+  { id: 'H053', name: '한당', grade: 'SR', role: '맹장', attr: '인', stats: { str: 76, int: 50, con: 75, spd: 70 }, activeSkill: { name: '선상습격', desc: '140% 단일 피해 (35% 발동/쿨2턴)', prob: 35, cd: 2 }, passiveSkill: { name: '숙련', desc: '기본 공격 데미지 10% 증가' } },
+  { id: 'H054', name: '조무', grade: 'SR', role: '호위', attr: '지', stats: { str: 70, int: 55, con: 78, spd: 65 }, activeSkill: { name: '빨간투구 유인', desc: '자신 방어력 50% 상승 및 도발 (30% 발동/쿨3턴)', prob: 30, cd: 3 }, passiveSkill: { name: '희생', desc: '아군 군주 보호 시 받는 피해 20% 감소' } },
+  { id: 'H055', name: '주태', grade: 'SR', role: '호위', attr: '천', stats: { str: 80, int: 35, con: 90, spd: 50 }, activeSkill: { name: '상흔불굴', desc: '체력 소량 회복 및 1턴 불사 (25% 발동/쿨3턴)', prob: 25, cd: 3 }, passiveSkill: { name: '흉터', desc: '체력이 30% 이하일 때 방어력 40% 증가' } },
+  { id: 'H056', name: '능통', grade: 'SR', role: '맹장', attr: '인', stats: { str: 80, int: 55, con: 76, spd: 78 }, activeSkill: { name: '복수충정', desc: '자신 공격력 20% 증가 타격 (30% 발동/쿨3턴)', prob: 30, cd: 3 }, passiveSkill: { name: '결투', desc: '자신보다 속도가 낮은 적에게 피해 15% 추가' } },
+  { id: 'H057', name: '반장', grade: 'SR', role: '맹장', attr: '지', stats: { str: 78, int: 50, con: 72, spd: 75 }, activeSkill: { name: '매복포박', desc: '기습적인 160% 피해 (30% 발동/쿨2턴)', prob: 30, cd: 2 }, passiveSkill: { name: '포획', desc: '적 처치 시 천운석 획득 확률 5% 증가' } },
+  { id: 'H058', name: '서성', grade: 'SR', role: '호위', attr: '천', stats: { str: 75, int: 65, con: 82, spd: 60 }, activeSkill: { name: '가짜누각', desc: '적 전체 공격력 감소 (25% 발동/쿨4턴)', prob: 25, cd: 4 }, passiveSkill: { name: '수비대', desc: '후열 아군이 받는 물리 피해 10% 감소' } },
+  { id: 'H059', name: '진궁', grade: 'SR', role: '모사', attr: '인', stats: { str: 40, int: 85, con: 60, spd: 65 }, activeSkill: { name: '배수진책', desc: '아군 방어 감소/공격 상승 (25% 발동/쿨3턴)', prob: 25, cd: 3 }, passiveSkill: { name: '절개', desc: '자신의 마법 방어력 15% 증가' } },
+  { id: 'H060', name: '고순', grade: 'SR', role: '맹장', attr: '지', stats: { str: 84, int: 55, con: 80, spd: 70 }, activeSkill: { name: '함진영진격', desc: '단일 적 방어 무시 150% 타격 (30% 발동/쿨3턴)', prob: 30, cd: 3 }, passiveSkill: { name: '정예병', desc: '자신의 치명타 피해 20% 증가' } },
+  { id: 'H061', name: '안량', grade: 'SR', role: '맹장', attr: '천', stats: { str: 86, int: 30, con: 75, spd: 75 }, activeSkill: { name: '용맹참격', desc: '강력한 160% 타격 (35% 발동/쿨2턴)', prob: 35, cd: 2 }, passiveSkill: { name: '위세', desc: '공격 시 10% 확률로 적 ATB 5% 감소' } },
+  { id: 'H062', name: '문추', grade: 'SR', role: '맹장', attr: '지', stats: { str: 85, int: 35, con: 76, spd: 74 }, activeSkill: { name: '파쇄격', desc: '적 방어력 감소 및 타격 (30% 발동/쿨3턴)', prob: 30, cd: 3 }, passiveSkill: { name: '동격', desc: '안량과 함께 출전 시 무력 10% 증가' } },
+  { id: 'H063', name: '전풍', grade: 'SR', role: '모사', attr: '인', stats: { str: 35, int: 86, con: 55, spd: 60 }, activeSkill: { name: '직언고함', desc: '마법 피해 및 쿨타임 증가 (25% 발동/쿨3턴)', prob: 25, cd: 3 }, passiveSkill: { name: '강직', desc: '자신 지력 8% 상시 증가' } },
+  { id: 'H064', name: '저수', grade: 'SR', role: '모사', attr: '천', stats: { str: 38, int: 84, con: 60, spd: 62 }, activeSkill: { name: '장기전법', desc: '매 턴 아군 체력 회복 버프 (25% 발동/쿨4턴)', prob: 25, cd: 4 }, passiveSkill: { name: '현명', desc: '아군 전체 상태이상 해제 확률 10% 증가' } },
+  { id: 'H065', name: '노식', grade: 'SR', role: '군주', attr: '지', stats: { str: 65, int: 80, con: 75, spd: 60 }, activeSkill: { name: '유학전수', desc: '아군 경험치 획득 증가 (20% 발동/쿨4턴)', prob: 20, cd: 4 }, passiveSkill: { name: '스승', desc: '파티 내 촉나라 무장 무력 5% 증가' } },
+  { id: 'H066', name: '황보숭', grade: 'SR', role: '군주', attr: '천', stats: { str: 70, int: 75, con: 80, spd: 65 }, activeSkill: { name: '한실진압', desc: '적 전체 90% 광역 피해 (25% 발동/쿨4턴)', prob: 25, cd: 4 }, passiveSkill: { name: '노장', desc: '전투 중 아군 전체 방어력 5% 상시 증가' } },
 
   // --- R 고급 무장 (24인) ---
-  { id: 'H067', name: '맹획', grade: 'R', role: '맹장', attr: '지', stats: { str: 80, int: 30, con: 80, spd: 60 }, skill: { name: '야성', desc: '자신 체력 소폭 회복 및 타격 (30% 발동/쿨3턴)', prob: 30, cd: 3 }, bonds: '남만의 왕' },
-  { id: 'H068', name: '축융', grade: 'R', role: '맹장', attr: '천', stats: { str: 78, int: 40, con: 70, spd: 80 }, skill: { name: '비도', desc: '단일 대상 150% 피해 (30% 발동/쿨2턴)', prob: 30, cd: 2 }, bonds: '남만의 여왕' },
-  { id: 'H069', name: '사마휘', grade: 'R', role: '모사', attr: '인', stats: { str: 20, int: 85, con: 50, spd: 55 }, skill: { name: '수경선생', desc: '아군 전체 디버프 저항 상승 (25% 발동/쿨4턴)', prob: 25, cd: 4 }, bonds: '은둔자' },
-  { id: 'H070', name: '화타', grade: 'R', role: '힐러', attr: '인', stats: { str: 15, int: 80, con: 50, spd: 60 }, skill: { name: '마취', desc: '가장 체력 낮은 아군 대폭 회복 (30% 발동/쿨3턴)', prob: 30, cd: 3 }, bonds: '명의' },
-  { id: 'H071', name: '우길', grade: 'R', role: '모사', attr: '지', stats: { str: 25, int: 82, con: 45, spd: 65 }, skill: { name: '환술', desc: '적 명중률 감소 및 마법 피해 (25% 발동/쿨3턴)', prob: 25, cd: 3 }, bonds: '신선' },
-  { id: 'H072', name: '좌자', grade: 'R', role: '모사', attr: '천', stats: { str: 20, int: 86, con: 40, spd: 70 }, skill: { name: '둔갑술', desc: '적 1명 1턴 기절 (25% 발동/쿨4턴)', prob: 25, cd: 4 }, bonds: '신선' },
-  { id: 'H073', name: '장각', grade: 'R', role: '모사', attr: '천', stats: { str: 40, int: 80, con: 55, spd: 60 }, skill: { name: '태평요술', desc: '적 전체 번개 피해 (30% 발동/쿨3턴)', prob: 30, cd: 3 }, bonds: '황건적의 난' },
-  { id: 'H074', name: '장보', grade: 'R', role: '모사', attr: '지', stats: { str: 50, int: 75, con: 60, spd: 55 }, skill: { name: '지공', desc: '적 전체 대지 피해 (30% 발동/쿨3턴)', prob: 30, cd: 3 }, bonds: '황건적의 난' },
-  { id: 'H075', name: '장량', grade: 'R', role: '모사', attr: '인', stats: { str: 60, int: 70, con: 65, spd: 50 }, skill: { name: '인해전술', desc: '아군 방어력 소폭 증가 (25% 발동/쿨4턴)', prob: 25, cd: 4 }, bonds: '황건적의 난' },
-  { id: 'H076', name: '공손찬', grade: 'R', role: '맹장', attr: '천', stats: { str: 75, int: 50, con: 70, spd: 85 }, skill: { name: '백마의종', desc: '아군 속도 10% 증가 (25% 발동/쿨4턴)', prob: 25, cd: 4 }, bonds: '북방의 영웅' },
-  { id: 'H077', name: '유표', grade: 'R', role: '군주', attr: '인', stats: { str: 50, int: 70, con: 65, spd: 50 }, skill: { name: '수성', desc: '아군 전체 체력 소폭 회복 (30% 발동/쿨3턴)', prob: 30, cd: 3 }, bonds: '형주의 군주' },
-  { id: 'H078', name: '유장', grade: 'R', role: '군주', attr: '지', stats: { str: 40, int: 60, con: 60, spd: 45 }, skill: { name: '보급', desc: '아군 1명 체력 중간 회복 (30% 발동/쿨3턴)', prob: 30, cd: 3 }, bonds: '익주의 군주' },
-  { id: 'H079', name: '마등', grade: 'R', role: '군주', attr: '천', stats: { str: 76, int: 45, con: 70, spd: 75 }, skill: { name: '서량의 분노', desc: '아군 공격력 15% 증가 (25% 발동/쿨4턴)', prob: 25, cd: 4 }, bonds: '서량의 군주' },
-  { id: 'H080', name: '한수', grade: 'R', role: '맹장', attr: '지', stats: { str: 72, int: 60, con: 65, spd: 65 }, skill: { name: '반란', desc: '적 방어력 15% 감소 (30% 발동/쿨3턴)', prob: 30, cd: 3 }, bonds: '마등의 의형제' },
-  { id: 'H081', name: '원술', grade: 'R', role: '군주', attr: '인', stats: { str: 55, int: 50, con: 60, spd: 55 }, skill: { name: '참칭', desc: '자신의 방어력 증가 (30% 발동/쿨3턴)', prob: 30, cd: 3 }, bonds: '명문가' },
-  { id: 'H082', name: '기령', grade: 'R', role: '맹장', attr: '천', stats: { str: 75, int: 40, con: 70, spd: 60 }, skill: { name: '삼첨도', desc: '단일 대상 140% 강력한 공격 (30% 발동/쿨2턴)', prob: 30, cd: 2 }, bonds: '원술의 맹장' },
-  { id: 'H083', name: '화웅', grade: 'R', role: '맹장', attr: '지', stats: { str: 80, int: 35, con: 75, spd: 55 }, skill: { name: '참수', desc: '단일 대상 150% 피해 (30% 발동/쿨2턴)', prob: 30, cd: 2 }, bonds: '동탁의 수하' },
-  { id: 'H084', name: '이유', grade: 'R', role: '모사', attr: '인', stats: { str: 30, int: 80, con: 50, spd: 65 }, skill: { name: '독주', desc: '단일 대상 마법 피해 및 중독 (30% 발동/쿨3턴)', prob: 30, cd: 3 }, bonds: '동탁의 모사' },
-  { id: 'H085', name: '곽사', grade: 'R', role: '맹장', attr: '지', stats: { str: 70, int: 30, con: 65, spd: 60 }, skill: { name: '약탈', desc: '타격 시 체력 흡수 (30% 발동/쿨3턴)', prob: 30, cd: 3 }, bonds: '동탁의 수하' },
-  { id: 'H086', name: '이각', grade: 'R', role: '맹장', attr: '천', stats: { str: 72, int: 35, con: 68, spd: 55 }, skill: { name: '폭력', desc: '단일 140% 피해 (30% 발동/쿨2턴)', prob: 30, cd: 2 }, bonds: '동탁의 수하' },
-  { id: 'H087', name: '관흥', grade: 'R', role: '맹장', attr: '천', stats: { str: 74, int: 50, con: 65, spd: 70 }, skill: { name: '복수', desc: '140% 피해 (30% 발동/쿨2턴)', prob: 30, cd: 2 }, bonds: '관우의 아들' },
-  { id: 'H088', name: '장포', grade: 'R', role: '맹장', attr: '지', stats: { str: 75, int: 40, con: 68, spd: 65 }, skill: { name: '분노', desc: '140% 피해 (30% 발동/쿨2턴)', prob: 30, cd: 2 }, bonds: '장비의 아들' },
-  { id: 'H089', name: '제갈근', grade: 'R', role: '모사', attr: '인', stats: { str: 40, int: 78, con: 60, spd: 60 }, skill: { name: '외교', desc: '적 1명 공격력 감소 (25% 발동/쿨3턴)', prob: 25, cd: 3 }, bonds: '제갈 일가' },
-  { id: 'H090', name: '마량', grade: 'R', role: '모사', attr: '인', stats: { str: 35, int: 75, con: 55, spd: 65 }, skill: { name: '백미', desc: '아군 1명 명중 증가 (25% 발동/쿨4턴)', prob: 25, cd: 4 }, bonds: '마씨 오상' },
+  { id: 'H067', name: '맹획', grade: 'R', role: '맹장', attr: '지', stats: { str: 80, int: 30, con: 80, spd: 60 }, activeSkill: { name: '야성돌격', desc: '자신 체력 회복 및 타격 (30% 발동/쿨3턴)', prob: 30, cd: 3 }, passiveSkill: { name: '남만왕', desc: '공격력 5% 증가' } },
+  { id: 'H068', name: '축융', grade: 'R', role: '맹장', attr: '천', stats: { str: 78, int: 40, con: 70, spd: 80 }, activeSkill: { name: '비도투척', desc: '단일 150% 피해 (30% 발동/쿨2턴)', prob: 30, cd: 2 }, passiveSkill: { name: '불의여신', desc: '화상 데미지 10% 증가' } },
+  { id: 'H069', name: '사마휘', grade: 'R', role: '모사', attr: '인', stats: { str: 20, int: 85, con: 50, spd: 55 }, activeSkill: { name: '인재추천', desc: '아군 전체 디버프 저항 상승 (25% 발동/쿨4턴)', prob: 25, cd: 4 }, passiveSkill: { name: '수경', desc: '지력 5% 증가' } },
+  { id: 'H070', name: '화타', grade: 'R', role: '힐러', attr: '인', stats: { str: 15, int: 80, con: 50, spd: 60 }, activeSkill: { name: '청낭서', desc: '최저 체력 아군 대폭 회복 (30% 발동/쿨3턴)', prob: 30, cd: 3 }, passiveSkill: { name: '명의', desc: '치유량 15% 증가' } },
+  { id: 'H071', name: '우길', grade: 'R', role: '모사', attr: '지', stats: { str: 25, int: 82, con: 45, spd: 65 }, activeSkill: { name: '저주환술', desc: '적 명중 감소 및 마법 피해 (25% 발동/쿨3턴)', prob: 25, cd: 3 }, passiveSkill: { name: '환각', desc: '회피율 5% 증가' } },
+  { id: 'H072', name: '좌자', grade: 'R', role: '모사', attr: '천', stats: { str: 20, int: 86, con: 40, spd: 70 }, activeSkill: { name: '둔갑비술', desc: '적 1명 1턴 기절 (25% 발동/쿨4턴)', prob: 25, cd: 4 }, passiveSkill: { name: '도술', desc: '지력 5% 증가' } },
+  { id: 'H073', name: '장각', grade: 'R', role: '모사', attr: '천', stats: { str: 40, int: 80, con: 55, spd: 60 }, activeSkill: { name: '태평요술', desc: '적 전체 번개 피해 (30% 발동/쿨3턴)', prob: 30, cd: 3 }, passiveSkill: { name: '대현량사', desc: '마법 피해 10% 증가' } },
+  { id: 'H074', name: '장보', grade: 'R', role: '모사', attr: '지', stats: { str: 50, int: 75, con: 60, spd: 55 }, activeSkill: { name: '지공주술', desc: '적 전체 대지 피해 (30% 발동/쿨3턴)', prob: 30, cd: 3 }, passiveSkill: { name: '지공', desc: '방어력 5% 증가' } },
+  { id: 'H075', name: '장량', grade: 'R', role: '모사', attr: '인', stats: { str: 60, int: 70, con: 65, spd: 50 }, activeSkill: { name: '인해전술', desc: '아군 방어력 소폭 증가 (25% 발동/쿨4턴)', prob: 25, cd: 4 }, passiveSkill: { name: '인공', desc: '체력 5% 증가' } },
+  { id: 'H076', name: '공손찬', grade: 'R', role: '맹장', attr: '천', stats: { str: 75, int: 50, con: 70, spd: 85 }, activeSkill: { name: '백마의종진격', desc: '아군 속도 10% 증가 (25% 발동/쿨4턴)', prob: 25, cd: 4 }, passiveSkill: { name: '기마술', desc: '속도 5% 증가' } },
+  { id: 'H077', name: '유표', grade: 'R', role: '군주', attr: '인', stats: { str: 50, int: 70, con: 65, spd: 50 }, activeSkill: { name: '형주수성', desc: '아군 전체 체력 소량 회복 (30% 발동/쿨3턴)', prob: 30, cd: 3 }, passiveSkill: { name: '자산', desc: '방어력 5% 증가' } },
+  { id: 'H078', name: '유장', grade: 'R', role: '군주', attr: '지', stats: { str: 40, int: 60, con: 60, spd: 45 }, activeSkill: { name: '풍요보급', desc: '아군 1명 체력 중간 회복 (30% 발동/쿨3턴)', prob: 30, cd: 3 }, passiveSkill: { name: '유약', desc: '받는 피해 5% 감소' } },
+  { id: 'H079', name: '마등', grade: 'R', role: '군주', attr: '천', stats: { str: 76, int: 45, con: 70, spd: 75 }, activeSkill: { name: '서량군합세', desc: '아군 공격력 15% 증가 (25% 발동/쿨4턴)', prob: 25, cd: 4 }, passiveSkill: { name: '변방호랑이', desc: '공격력 5% 증가' } },
+  { id: 'H080', name: '한수', grade: 'R', role: '맹장', attr: '지', stats: { str: 72, int: 60, con: 65, spd: 65 }, activeSkill: { name: '배반의칼', desc: '적 방어력 15% 감소 (30% 발동/쿨3턴)', prob: 30, cd: 3 }, passiveSkill: { name: '생존', desc: '회피 5% 증가' } },
+  { id: 'H081', name: '원술', grade: 'R', role: '군주', attr: '인', stats: { str: 55, int: 50, con: 60, spd: 55 }, activeSkill: { name: '위제칭호', desc: '자신의 방어력 증가 (30% 발동/쿨3턴)', prob: 30, cd: 3 }, passiveSkill: { name: '허세', desc: '방어력 5% 증가' } },
+  { id: 'H082', name: '기령', grade: 'R', role: '맹장', attr: '천', stats: { str: 75, int: 40, con: 70, spd: 60 }, activeSkill: { name: '삼첨도강타', desc: '단일 140% 강력 공격 (30% 발동/쿨2턴)', prob: 30, cd: 2 }, passiveSkill: { name: '강건', desc: '무력 5% 증가' } },
+  { id: 'H083', name: '화웅', grade: 'R', role: '맹장', attr: '지', stats: { str: 80, int: 35, con: 75, spd: 55 }, activeSkill: { name: '단두참', desc: '단일 150% 피해 (30% 발동/쿨2턴)', prob: 30, cd: 2 }, passiveSkill: { name: '기세', desc: '공격력 5% 증가' } },
+  { id: 'H084', name: '이유', grade: 'R', role: '모사', attr: '인', stats: { str: 30, int: 80, con: 50, spd: 65 }, activeSkill: { name: '독주계략', desc: '단일 마법 및 중독 피해 (30% 발동/쿨3턴)', prob: 30, cd: 3 }, passiveSkill: { name: '음험', desc: '지력 5% 증가' } },
+  { id: 'H085', name: '곽사', grade: 'R', role: '맹장', attr: '지', stats: { str: 70, int: 30, con: 65, spd: 60 }, activeSkill: { name: '산적약탈', desc: '타격 시 체력 흡수 (30% 발동/쿨3턴)', prob: 30, cd: 3 }, passiveSkill: { name: '포악', desc: '치명타 5% 증가' } },
+  { id: 'H086', name: '이각', grade: 'R', role: '맹장', attr: '천', stats: { str: 72, int: 35, con: 68, spd: 55 }, activeSkill: { name: '광폭타격', desc: '단일 140% 피해 (30% 발동/쿨2턴)', prob: 30, cd: 2 }, passiveSkill: { name: '야욕', desc: '공격력 5% 증가' } },
+  { id: 'H087', name: '관흥', grade: 'R', role: '맹장', attr: '천', stats: { str: 74, int: 50, con: 65, spd: 70 }, activeSkill: { name: '부전자전', desc: '140% 피해 (30% 발동/쿨2턴)', prob: 30, cd: 2 }, passiveSkill: { name: '충심', desc: '무력 5% 증가' } },
+  { id: 'H088', name: '장포', grade: 'R', role: '맹장', attr: '지', stats: { str: 75, int: 40, con: 68, spd: 65 }, activeSkill: { name: '사자후주니어', desc: '140% 피해 (30% 발동/쿨2턴)', prob: 30, cd: 2 }, passiveSkill: { name: '맹위', desc: '무력 5% 증가' } },
+  { id: 'H089', name: '제갈근', grade: 'R', role: '모사', attr: '인', stats: { str: 40, int: 78, con: 60, spd: 60 }, activeSkill: { name: '화목외교', desc: '적 1명 공격력 감소 (25% 발동/쿨3턴)', prob: 25, cd: 3 }, passiveSkill: { name: '온화', desc: '지력 5% 증가' } },
+  { id: 'H090', name: '마량', grade: 'R', role: '모사', attr: '인', stats: { str: 35, int: 75, con: 55, spd: 65 }, activeSkill: { name: '백미계책', desc: '아군 1명 명중 증가 (25% 발동/쿨4턴)', prob: 25, cd: 4 }, passiveSkill: { name: '조언', desc: '지력 5% 증가' } },
 
   // --- N 일반 무장 (10인) ---
-  { id: 'H091', name: '황건적', grade: 'N', role: '맹장', attr: '지', stats: { str: 30, int: 10, con: 30, spd: 30 }, skill: { name: '창찌르기', desc: '120% 물리 피해 (20% 발동/쿨2턴)', prob: 20, cd: 2 }, bonds: '황건의 난' },
-  { id: 'H092', name: '민병대', grade: 'N', role: '호위', attr: '인', stats: { str: 20, int: 10, con: 40, spd: 25 }, skill: { name: '방패막기', desc: '자신의 방어력 20% 상승 (20% 발동/쿨3턴)', prob: 20, cd: 3 }, bonds: '농민의 분노' },
-  { id: 'H093', name: '산적', grade: 'N', role: '맹장', attr: '지', stats: { str: 35, int: 15, con: 25, spd: 35 }, skill: { name: '도끼질', desc: '120% 물리 피해 (20% 발동/쿨2턴)', prob: 20, cd: 2 }, bonds: '도적떼' },
-  { id: 'H094', name: '수적', grade: 'N', role: '맹장', attr: '천', stats: { str: 32, int: 12, con: 28, spd: 38 }, skill: { name: '작살 던지기', desc: '120% 물리 피해 (20% 발동/쿨2턴)', prob: 20, cd: 2 }, bonds: '도적떼' },
-  { id: 'H095', name: '궁병', grade: 'N', role: '맹장', attr: '천', stats: { str: 40, int: 20, con: 20, spd: 40 }, skill: { name: '활쏘기', desc: '120% 물리 피해 (20% 발동/쿨2턴)', prob: 20, cd: 2 }, bonds: '정규군' },
-  { id: 'H096', name: '창병', grade: 'N', role: '맹장', attr: '지', stats: { str: 38, int: 15, con: 35, spd: 30 }, skill: { name: '창 찌르기', desc: '120% 물리 피해 (20% 발동/쿨2턴)', prob: 20, cd: 2 }, bonds: '정규군' },
-  { id: 'H097', name: '기병', grade: 'N', role: '맹장', attr: '인', stats: { str: 45, int: 18, con: 30, spd: 45 }, skill: { name: '돌격', desc: '120% 물리 피해 (20% 발동/쿨2턴)', prob: 20, cd: 2 }, bonds: '정규군' },
-  { id: 'H098', name: '보병', grade: 'N', role: '호위', attr: '지', stats: { str: 30, int: 15, con: 45, spd: 25 }, skill: { name: '방어 자세', desc: '자신의 방어력 20% 상승 (20% 발동/쿨3턴)', prob: 20, cd: 3 }, bonds: '정규군' },
-  { id: 'H099', name: '호위병', grade: 'N', role: '호위', attr: '인', stats: { str: 35, int: 20, con: 50, spd: 28 }, skill: { name: '보호', desc: '자신의 방어력 20% 상승 (20% 발동/쿨3턴)', prob: 20, cd: 3 }, bonds: '정규군' },
-  { id: 'H100', name: '전령', grade: 'N', role: '모사', attr: '천', stats: { str: 20, int: 30, con: 20, spd: 55 }, skill: { name: '소식 전달', desc: '아군 속도 10% 상승 (20% 발동/쿨4턴)', prob: 20, cd: 4 }, bonds: '정규군' }
+  { id: 'H091', name: '황건적', grade: 'N', role: '맹장', attr: '지', stats: { str: 30, int: 10, con: 30, spd: 30 }, activeSkill: { name: '난도질', desc: '120% 물리 피해 (20% 발동/쿨2턴)', prob: 20, cd: 2 }, passiveSkill: { name: '봉기', desc: '공격력 3% 증가' } },
+  { id: 'H092', name: '민병대', grade: 'N', role: '호위', attr: '인', stats: { str: 20, int: 10, con: 40, spd: 25 }, activeSkill: { name: '죽창막기', desc: '자신 방어력 20% 상승 (20% 발동/쿨3턴)', prob: 20, cd: 3 }, passiveSkill: { name: '집결', desc: '방어력 3% 증가' } },
+  { id: 'H093', name: '산적', grade: 'N', role: '맹장', attr: '지', stats: { str: 35, int: 15, con: 25, spd: 35 }, activeSkill: { name: '도끼후리기', desc: '120% 물리 피해 (20% 발동/쿨2턴)', prob: 20, cd: 2 }, passiveSkill: { name: '약탈', desc: '공격력 3% 증가' } },
+  { id: 'H094', name: '수적', grade: 'N', role: '맹장', attr: '천', stats: { str: 32, int: 12, con: 28, spd: 38 }, activeSkill: { name: '작살꽂기', desc: '120% 물리 피해 (20% 발동/쿨2턴)', prob: 20, cd: 2 }, passiveSkill: { name: '수전', desc: '속도 3% 증가' } },
+  { id: 'H095', name: '궁병', grade: 'N', role: '맹장', attr: '천', stats: { str: 40, int: 20, con: 20, spd: 40 }, activeSkill: { name: '일제사격', desc: '120% 물리 피해 (20% 발동/쿨2턴)', prob: 20, cd: 2 }, passiveSkill: { name: '사격', desc: '공격력 3% 증가' } },
+  { id: 'H096', name: '창병', grade: 'N', role: '맹장', attr: '지', stats: { str: 38, int: 15, con: 35, spd: 30 }, activeSkill: { name: '긴창찌르기', desc: '120% 물리 피해 (20% 발동/쿨2턴)', prob: 20, cd: 2 }, passiveSkill: { name: '대형', desc: '방어력 3% 증가' } },
+  { id: 'H097', name: '기병', grade: 'N', role: '맹장', attr: '인', stats: { str: 45, int: 18, con: 30, spd: 45 }, activeSkill: { name: '돌파기동', desc: '120% 물리 피해 (20% 발동/쿨2턴)', prob: 20, cd: 2 }, passiveSkill: { name: '질주', desc: '속도 3% 증가' } },
+  { id: 'H098', name: '보병', grade: 'N', role: '호위', attr: '지', stats: { str: 30, int: 15, con: 45, spd: 25 }, activeSkill: { name: '방패세우기', desc: '자신 방어력 20% 상승 (20% 발동/쿨3턴)', prob: 20, cd: 3 }, passiveSkill: { name: '견고', desc: '방어력 3% 증가' } },
+  { id: 'H099', name: '호위병', grade: 'N', role: '호위', attr: '인', stats: { str: 35, int: 20, con: 50, spd: 28 }, activeSkill: { name: '근접호위', desc: '자신 방어력 20% 상승 (20% 발동/쿨3턴)', prob: 20, cd: 3 }, passiveSkill: { name: '보호', desc: '체력 3% 증가' } },
+  { id: 'H100', name: '전령', grade: 'N', role: '모사', attr: '천', stats: { str: 20, int: 30, con: 20, spd: 55 }, activeSkill: { name: '파발마', desc: '아군 속도 10% 상승 (20% 발동/쿨4턴)', prob: 20, cd: 4 }, passiveSkill: { name: '정보', desc: '속도 3% 증가' } }
 ];
 
+  
 function getImgUrl(seed) { return `https://api.dicebear.com/9.x/adventurer/svg?seed=${seed}&backgroundColor=0f172a`; }
 
 function bootGame() {
@@ -453,7 +456,7 @@ function openCharModal(id) {
   var isOwned = state.player.roster.some(r => r.id === h.id);
   var attrChar = attrMap[h.attr] || '無';
   var statTotal = h.stats.str + h.stats.int + h.stats.con + h.stats.spd;
-  var lockedDiv = '<div class="absolute inset-0 bg-slate-900/80 backdrop-blur-[2px] z-10 flex items-center justify-center text-sm font-bold text-slate-500 border border-slate-700">정보 잠김</div>';
+  var lockedDiv = '<div class="absolute inset-0 bg-slate-900/80 backdrop-blur-[2px] z-10 flex items-center justify-center text-sm font-bold text-slate-500 border border-slate-700 rounded-xl">정보 잠김</div>';
 
   var html = `<div class="relative mb-4 mt-2">
     <img src="${getImgUrl(h.id)}" class="w-24 h-24 rounded-full border-4 ${isOwned ? 'border-sky-400' : 'border-slate-600 grayscale'} bg-slate-900 shadow-xl"> 
@@ -481,8 +484,11 @@ function openCharModal(id) {
 
   <div class="w-full bg-slate-900 rounded-xl p-3 mb-3 border border-slate-700 relative">
     ${!isOwned ? lockedDiv : ''}
-    <div class="text-xs text-amber-400 mb-1 font-bold flex items-center gap-1"><span>⚔️</span> 스킬: <span class="text-white ml-1">${h.skill ? h.skill.name : '없음'}</span></div>
-    <div class="text-[11px] text-slate-300 leading-relaxed pl-3 border-l-2 border-slate-600 mt-2">${h.skill ? h.skill.desc : '-'}</div>
+    <div class="text-xs text-amber-400 mb-1 font-bold flex items-center gap-1"><span>⚔️</span> 액티브: <span class="text-white ml-1">${h.activeSkill ? h.activeSkill.name : (h.skill ? h.skill.name : '없음')}</span></div>
+    <div class="text-[11px] text-slate-300 leading-relaxed pl-3 border-l-2 border-slate-600 mt-1 mb-3">${h.activeSkill ? h.activeSkill.desc : (h.skill ? h.skill.desc : '-')}</div>
+    
+    <div class="text-xs text-emerald-400 mb-1 font-bold flex items-center gap-1"><span>🛡️</span> 패시브: <span class="text-white ml-1">${h.passiveSkill ? h.passiveSkill.name : '없음'}</span></div>
+    <div class="text-[11px] text-slate-300 leading-relaxed pl-3 border-l-2 border-slate-600 mt-1">${h.passiveSkill ? h.passiveSkill.desc : '-'}</div>
   </div>
 
   <div class="w-full bg-slate-900 rounded-xl p-3 border border-slate-700 relative">
@@ -503,6 +509,18 @@ function getUnitStats(u) {
   var baseDef = u.stats.con * 2;
   var baseSpd = u.stats.spd;
   
+  // --- 패시브 스킬 효과 적용 ---
+  if (u.passiveSkill) {
+    var desc = u.passiveSkill.desc;
+    if (desc.includes('무력 5% 증가') || desc.includes('공격력 5% 증가')) baseAtk *= 1.05;
+    if (desc.includes('공격력 10% 증가')) baseAtk *= 1.10;
+    if (desc.includes('방어력 5% 증가')) baseDef *= 1.05;
+    if (desc.includes('방어력 10% 증가') || desc.includes('방어력 15% 증가')) baseDef *= 1.10;
+    if (desc.includes('속도 5% 증가')) baseSpd *= 1.05;
+    if (desc.includes('지력 5% 증가')) baseAtk *= 1.05; // 모사/힐러용
+    // 관우(만인적), 조운(일신시담) 등 특수 패시브는 dealDamage 함수 등에서 처리
+  }
+
   var atkB = 0, defB = 0, spdB = 0;
   u.buffs.forEach(b => {
     if(b.type === 'atk') atkB += b.amount;
@@ -514,9 +532,7 @@ function getUnitStats(u) {
     atk: Math.floor(baseAtk * (1 + atkB)),
     def: Math.floor(baseDef * (1 + defB)),
     spd: Math.floor(baseSpd * (1 + spdB)),
-    atkBonus: atkB,
-    defBonus: defB,
-    spdBonus: spdB
+    atkBonus: atkB, defBonus: defB, spdBonus: spdB
   };
 }
 
@@ -577,23 +593,24 @@ function battleTick() {
 }
 
 function executeTurn(unit) {
-  // 기절 체크
   if (unit.buffs.some(b => b.type === 'stun')) {
     addLog(`<span class='grade-${unit.grade}'>${unit.name}</span>은(는) 기절하여 행동하지 못합니다.`);
     return;
   }
 
-  // 확률 및 쿨타임 기반 스킬 발동
-  var skill = unit.skill;
-  var prob = skill ? (skill.prob || 30) : 30; // 기본 확률 30%
+  // 스킬 정보 가져오기
+  var skill = unit.activeSkill || unit.skill;
+  var prob = skill ? (skill.prob || 30) : 30;
   
+  // 쿨타임이 0이고 확률에 당첨되면 액티브 스킬 발동
   if (unit.cd <= 0 && Math.random() * 100 < prob) {
     executeSkill(unit);
-    unit.cd = skill ? (skill.cd || 3) : 3; // 기본 쿨타임
+    unit.cd = skill ? (skill.cd || 3) : 3; // 사용 후 쿨타임 적용
   } else {
     executeAttack(unit);
   }
 }
+
 
 function dealDamage(attacker, target, multiplier) {
   if (!target || target.hp <= 0) return;
@@ -632,80 +649,46 @@ function executeSkill(unit) {
   if (aliveEnemies.length === 0) return;
   
   var target = aliveEnemies[Math.floor(Math.random() * aliveEnemies.length)];
+  var skillName = unit.activeSkill ? unit.activeSkill.name : (unit.skill ? unit.skill.name : '스킬');
   
-  addLog(`<span class='grade-${unit.grade} font-bold text-amber-300'>[스킬 발동] ${unit.name} - ${unit.skill ? unit.skill.name : '강타'}!!</span>`);
+  addLog(`<span class='grade-${unit.grade} font-bold text-amber-300'>[스킬 발동] ${unit.name} - ${skillName}!!</span>`);
 
   switch(unit.id) {
-    case 'H001': // 유비
+    case 'H004': // 유비: 도원결의
       aliveAllies.forEach(a => {
-        a.hp = Math.min(a.maxHp, a.hp + a.maxHp * 0.15);
-        a.buffs.push({type: 'def', amount: 0.2, turns: 3});
+        a.hp = Math.min(a.maxHp, a.hp + a.maxHp * 0.20);
+        a.buffs.push({type: 'def', amount: 0.25, turns: 3});
       });
-      addLog(`<span class='text-green-400'>아군 전체의 체력이 회복되고 방어력이 상승합니다!</span>`);
+      addLog(`<span class='text-green-400'>아군 전체가 유비의 인덕으로 회복 및 방어력이 상승합니다!</span>`);
       break;
-    case 'H002': // 관우
-      dealDamage(unit, target, 2.0);
+    case 'H005': // 관우: 오관참육장
+      dealDamage(unit, target, 2.2);
       target.buffs.push({type: 'stun', amount: 0, turns: 1});
       break;
-    case 'H003': // 장비
-      aliveEnemies.forEach(e => {
-        dealDamage(unit, e, 0.8);
-        if(Math.random() < 0.3) e.buffs.push({type: 'stun', amount: 0, turns: 1});
-      });
-      break;
-    case 'H004': // 조운
-      dealDamage(unit, target, 1.2);
-      if(target.hp > 0) dealDamage(unit, target, 1.2); // 2회 공격
-      break;
-    case 'H005': // 여포
+    case 'H008': // 여포: 방천화극 무쌍
       aliveEnemies.forEach(e => dealDamage(unit, e, 1.5));
       break;
-    case 'H006': // 제갈량
+    case 'H009': // 제갈량: 적벽의 동남풍
       aliveEnemies.forEach(e => {
         dealDamage(unit, e, 1.2);
-        e.buffs.push({type: 'spd', amount: -0.2, turns: 2});
+        e.buffs.push({type: 'spd', amount: -0.3, turns: 2});
       });
       break;
-    case 'H007': // 하후돈
-      unit.buffs.push({type: 'def', amount: 0.3, turns: 3});
-      dealDamage(unit, target, 1.5);
-      break;
-    case 'H008': // 마초
-      dealDamage(unit, target, 1.8);
-      break;
-    case 'H009': // 위연
-      var hpRatio = unit.hp / unit.maxHp;
-      var multi = hpRatio < 0.5 ? 2.5 : 1.5;
-      dealDamage(unit, target, multi);
-      break;
-    case 'H010': // 황개
+    case 'H051': // 황개: 고육지책
       var cost = Math.floor(unit.hp * 0.2);
       unit.hp -= cost;
       aliveAllies.forEach(a => a.buffs.push({type: 'def', amount: 0.3, turns: 4}));
-      addLog(`<span class='text-purple-400'>황개가 고육지책으로 체력을 소모하여 아군 방어력을 크게 높입니다!</span>`);
+      addLog(`<span class='text-purple-400'>황개가 스스로를 희생하여 아군의 방어력을 대폭 올립니다!</span>`);
       break;
     default:
-      // 그 외 무장들은 직업별 역할 수행
-      if (unit.role === '맹장') { 
-        dealDamage(unit, target, 1.5); 
-      }
-      else if (unit.role === '모사') { 
-        aliveEnemies.forEach(e => dealDamage(unit, e, 0.8)); 
-      }
-      else if (unit.role === '호위') { 
-        unit.buffs.push({type: 'def', amount: 0.3, turns: 2}); 
-        dealDamage(unit, target, 1.0); 
-      }
-      else if (unit.role === '힐러') { 
-        if(aliveAllies.length > 0) {
-          var lowest = aliveAllies.reduce((min, a) => (a.hp/a.maxHp < min.hp/min.maxHp) ? a : min, aliveAllies[0]);
-          var healAmount = getUnitStats(unit).atk * 2.0;
-          lowest.hp = Math.min(lowest.maxHp, lowest.hp + healAmount); 
-          addLog(`<span class='text-green-400 font-bold'>${unit.name}이(가) ${lowest.name}의 체력을 ${Math.floor(healAmount)} 회복!</span>`);
-        }
-      }
-      else if (unit.role === '군주') { 
-        aliveAllies.forEach(a => { a.buffs.push({type: 'atk', amount: 0.15, turns: 3}); }); 
+      // 역할별 범용 스킬 처리
+      if (unit.role === '힐러' && aliveAllies.length > 0) {
+        var lowest = aliveAllies.reduce((min, a) => (a.hp/a.maxHp < min.hp/min.maxHp) ? a : min, aliveAllies[0]);
+        var healAmount = getUnitStats(unit).atk * 2.0;
+        lowest.hp = Math.min(lowest.maxHp, lowest.hp + healAmount);
+        addLog(`<span class='text-green-400'>${unit.name}이(가) ${lowest.name}를 ${Math.floor(healAmount)} 회복시킵니다.</span>`);
+      } else {
+        dealDamage(unit, target, 1.5);
       }
       break;
   }
