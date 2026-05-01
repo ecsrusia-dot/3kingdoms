@@ -78,6 +78,7 @@ var state = {
   activeTab: 'gacha',
   player: { resources: { skyStones: 15000, tacticsManuals: 0, legacyPoints: 0 }, roster: [], party: [null, null, null, null, null] },
   battle: { timer: null, logs: [], ally: [], enemy: [], isRunning: false }
+  filters: { grade: 'ALL', role: 'ALL', attr: 'ALL' }
 };
 
 var attrMap = { '천': '天', '지': '地', '인': '人' };
@@ -328,12 +329,50 @@ function renderBarracks(container) {
     }
     html += '</div>';
   }
-  html += '</div><div class="text-xs font-bold mb-2 border-b border-slate-700 pb-1 text-slate-300">보유 무장 <span class="font-normal text-[10px] text-slate-500">(좌측 클릭 시 상세정보)</span></div><div class="flex-1 overflow-y-auto space-y-2 pb-10 custom-scrollbar">';
+  
+  // 필터 선택(Select) UI 추가
+  html += `</div>
+  <div class="text-xs font-bold mb-2 border-b border-slate-700 pb-1 text-slate-300">보유 무장 <span class="font-normal text-[10px] text-slate-500">(좌측 클릭 시 상세정보)</span></div>
+  <div class="flex gap-1 mb-2">
+    <select onchange="updateFilter('grade', this.value)" class="bg-slate-800 text-[10px] p-1.5 border border-slate-600 rounded text-slate-300 flex-1 outline-none">
+      <option value="ALL" ${state.filters.grade === 'ALL' ? 'selected' : ''}>모든 등급</option>
+      <option value="UR" ${state.filters.grade === 'UR' ? 'selected' : ''}>UR 신화</option>
+      <option value="SSR" ${state.filters.grade === 'SSR' ? 'selected' : ''}>SSR 영웅</option>
+      <option value="SR" ${state.filters.grade === 'SR' ? 'selected' : ''}>SR 희귀</option>
+      <option value="R" ${state.filters.grade === 'R' ? 'selected' : ''}>R 고급</option>
+      <option value="N" ${state.filters.grade === 'N' ? 'selected' : ''}>N 일반</option>
+    </select>
+    <select onchange="updateFilter('role', this.value)" class="bg-slate-800 text-[10px] p-1.5 border border-slate-600 rounded text-slate-300 flex-1 outline-none">
+      <option value="ALL" ${state.filters.role === 'ALL' ? 'selected' : ''}>모든 직업</option>
+      <option value="군주" ${state.filters.role === '군주' ? 'selected' : ''}>군주</option>
+      <option value="맹장" ${state.filters.role === '맹장' ? 'selected' : ''}>맹장</option>
+      <option value="호위" ${state.filters.role === '호위' ? 'selected' : ''}>호위</option>
+      <option value="모사" ${state.filters.role === '모사' ? 'selected' : ''}>모사</option>
+      <option value="힐러" ${state.filters.role === '힐러' ? 'selected' : ''}>힐러</option>
+    </select>
+    <select onchange="updateFilter('attr', this.value)" class="bg-slate-800 text-[10px] p-1.5 border border-slate-600 rounded text-slate-300 flex-1 outline-none">
+      <option value="ALL" ${state.filters.attr === 'ALL' ? 'selected' : ''}>모든 속성</option>
+      <option value="천" ${state.filters.attr === '천' ? 'selected' : ''}>天(천)</option>
+      <option value="지" ${state.filters.attr === '지' ? 'selected' : ''}>地(지)</option>
+      <option value="인" ${state.filters.attr === '인' ? 'selected' : ''}>人(인)</option>
+    </select>
+  </div>
+  <div class="flex-1 overflow-y-auto space-y-2 pb-10 custom-scrollbar">`;
 
-  if(state.player.roster.length === 0) {
-    html += '<div class="text-center text-slate-500 py-6 text-[11px] bg-slate-800/50 rounded-lg">보유한 무장이 없습니다.</div>';
+  // 필터 로직 적용
+  var filteredRoster = state.player.roster.filter(r => {
+    var d = HERO_DB.find(x => x.id === r.id);
+    if (!d) return false;
+    if (state.filters.grade !== 'ALL' && d.grade !== state.filters.grade) return false;
+    if (state.filters.role !== 'ALL' && d.role !== state.filters.role) return false;
+    if (state.filters.attr !== 'ALL' && d.attr !== state.filters.attr) return false;
+    return true;
+  });
+
+  if(filteredRoster.length === 0) {
+    html += '<div class="text-center text-slate-500 py-6 text-[11px] bg-slate-800/50 rounded-lg">조건에 맞는 무장이 없습니다.</div>';
   } else {
-    state.player.roster.forEach(r => {
+    filteredRoster.forEach(r => {
       var d = HERO_DB.find(x => x.id === r.id);
       var inP = state.player.party.includes(d.id);
       var bStyle = inP ? 'border-slate-700 opacity-50' : 'border-slate-600 bg-slate-800 active:bg-slate-700';
@@ -359,6 +398,7 @@ function renderBarracks(container) {
   }
   container.innerHTML = html + '</div>';
 }
+
 
 function addToParty(id) {
   var idx = state.player.party.indexOf(null);
