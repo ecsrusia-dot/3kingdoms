@@ -501,11 +501,13 @@ function closeModal(id) { document.getElementById(id).classList.add('hidden'); }
 // =============== [텍스트 파싱 기반 상태이상/패시브 통합 엔진] ===============
 
 function getUnitStats(u) {
-  var baseAtk = (u.role === '모사' || u.role === '힐러') ? u.stats.int * 5 : u.stats.str * 5;
-  var baseDef = u.stats.con * 2;
+  var isMagic = (u.role === '모사' || u.role === '힐러');
+  var baseAtk = isMagic ? u.stats.int * 5 : u.stats.str * 5;
+  var baseDef = u.stats.con * 2; // 물리 방어력
+  var baseMdef = (u.stats.con * 1) + (u.stats.int * 1.5); // 마법 방어력 (지력 비례)
   var baseSpd = u.stats.spd;
   
-  // 1. 패시브 텍스트에 따른 자동 스탯 증폭
+  // --- 패시브 스킬 효과 적용 ---
   if (u.passiveSkill) {
     var pDesc = u.passiveSkill.desc;
     if (pDesc.includes('공격력')) {
@@ -514,17 +516,19 @@ function getUnitStats(u) {
     }
     if (pDesc.includes('방어력')) {
       var m = pDesc.match(/방어력\s*(\d+)%/);
-      if (m) baseDef *= (1 + parseInt(m[1])/100);
+      if (m) {
+        baseDef *= (1 + parseInt(m[1])/100);
+        baseMdef *= (1 + parseInt(m[1])/100); // 범용 방어는 마방도 올려줌
+      }
     }
     if (pDesc.includes('속도')) {
       var m = pDesc.match(/속도\s*(\d+)%/);
       if (m) baseSpd *= (1 + parseInt(m[1])/100);
     }
-    if (pDesc.includes('지력')) baseAtk *= 1.1; // 힐러/모사는 지력이 공격력
-    if (pDesc.includes('무력')) baseAtk *= 1.1; // 맹장 등 무력
+    if (pDesc.includes('지력')) { baseAtk *= 1.1; baseMdef *= 1.1; } // 지력업은 마방업
+    if (pDesc.includes('무력')) { baseAtk *= 1.1; }
   }
 
-  // 2. 버프/디버프 합산
   var atkB = 0, defB = 0, spdB = 0;
   u.buffs.forEach(b => {
     if(b.type === 'atk') atkB += b.amount;
@@ -535,10 +539,13 @@ function getUnitStats(u) {
   return {
     atk: Math.floor(baseAtk * (1 + atkB)),
     def: Math.floor(baseDef * (1 + defB)),
+    mdef: Math.floor(baseMdef * (1 + defB)),
     spd: Math.floor(baseSpd * (1 + spdB)),
-    atkBonus: atkB, defBonus: defB, spdBonus: spdB
+    atkBonus: atkB, defBonus: defB, spdBonus: spdB,
+    isMagic: isMagic // 직업 평타 타입 판별용
   };
 }
+
 
 function initBattle(container) {
   var hasHero = state.player.party.some(id => id !== null);
@@ -657,7 +664,7 @@ function getValidTarget(unit, targets) {
   return aliveTargets[Math.floor(Math.random() * aliveTargets.length)];
 }
 
-function dealDamage(attacker, target, multiplier) {
+function dealDamage(attacker, target, multiplier, dmgType = 'physical') {
   if (!target || target.hp <= 0) return;
   
   var atkStats = getUnitStats(attacker);
@@ -677,7 +684,9 @@ function dealDamage(attacker, target, multiplier) {
      }
   }
 
-  var miti = 100 / (100 + (defStats.def));
+  // ★ 핵심: 데미지 타입에 따른 방어력 적용 분기
+  var targetDef = (dmgType === 'magic') ? defStats.mdef : defStats.def;
+  var miti = 100 / (100 + targetDef);
   
   var attrBonus = 1.0;
   if ((attacker.attr === '천' && target.attr === '지') || (attacker.attr === '지' && target.attr === '인') || (attacker.attr === '인' && target.attr === '천')) {
@@ -687,14 +696,109 @@ function dealDamage(attacker, target, multiplier) {
   var finalDmg = Math.max(1, Math.floor(baseDmg * miti * attrBonus));
   target.hp = Math.max(0, target.hp - finalDmg);
   
-  addLog(`<span class='grade-${attacker.grade} font-bold'>${attacker.name}</span>이(가) <span class='grade-${target.grade} font-bold'>${target.name}</span>에게 <span class='text-red-400 font-bold'>${finalDmg}</span> 피해!` + (attrBonus > 1.0 ? " <span class='text-[9px] text-amber-400'>(상성 우위!)</span>" : ""));
-}
-
-function executeAttack(unit) {
+  // 전투 로그에 마법/물리 표시 추가
+  var typeStr = dmgType === 'magic' ? "<span class='text-blue-300'>마법</span>" : "<span class='text-red-300'>물리</span>";
+  addLog(`<span class='grade-${attacker.grade} font-bold'>${attacker.name}</span>이(가) <span class='grade-${target.grade} font-bold'>${target.name}</span>에게 ${typeStr} <span class='text-red-400 font-bold'>${finalDmg}</span> 피해!` + (attrBonus > 1.0 ? " <span class='text-[9px] text-amber-400'>(상성 우위!)</span>" : ""));
+}function executeAttack(unit) {
   var targets = unit.side === 'ally' ? state.battle.enemy : state.battle.ally;
   var target = getValidTarget(unit, targets);
-  if(target) dealDamage(unit, target, 1.0);
+  var dmgType = getUnitStats(unit).isMagic ? 'magic' : 'physical'; // 직업 평타 타입
+  if(target) dealDamage(unit, target, 1.0, dmgType);
 }
+
+function executeSkill(unit) {
+  var enemies = unit.side === 'ally' ? state.battle.enemy : state.battle.ally;
+  var allies = unit.side === 'ally' ? state.battle.ally : state.battle.enemy;
+  var aliveEnemies = enemies.filter(t => t.hp > 0);
+  var aliveAllies = allies.filter(t => t.hp > 0);
+  if (aliveEnemies.length === 0) return;
+  
+  var skillName = unit.activeSkill ? unit.activeSkill.name : (unit.skill ? unit.skill.name : '스킬');
+  var desc = unit.activeSkill ? unit.activeSkill.desc : (unit.skill ? unit.skill.desc : '');
+  
+  addLog(`<span class='grade-${unit.grade} font-bold text-amber-300'>[스킬 발동] ${unit.name} - ${skillName}!!</span>`);
+
+  // 1. 타겟 결정
+  var targetEnemies = [];
+  var targetAllies = [];
+  
+  if (desc.includes('적 전체')) targetEnemies = aliveEnemies;
+  else if (desc.includes('체력 가장 낮은 적')) {
+      targetEnemies = [aliveEnemies.reduce((min, e) => (e.hp/e.maxHp < min.hp/min.maxHp) ? e : min, aliveEnemies[0])];
+  }
+  else targetEnemies = [getValidTarget(unit, enemies)];
+
+  if (desc.includes('아군 전체')) targetAllies = aliveAllies;
+  else if (desc.includes('최저 체력 아군')) {
+      targetAllies = [aliveAllies.reduce((min, a) => (a.hp/a.maxHp < min.hp/min.maxHp) ? a : min, aliveAllies[0])];
+  }
+  else targetAllies = [unit]; 
+
+  // ★ 2. 데미지 배율 및 물리/마법 타입 추출
+  var multi = 1.2;
+  var dmgType = getUnitStats(unit).isMagic ? 'magic' : 'physical'; // 기본값
+
+  var match = desc.match(/(\d+)%\s*(마법|물리)?\s*피해/);
+  if (match) {
+      multi = parseInt(match[1]) / 100;
+      if (match[2] === '마법') dmgType = 'magic';
+      else if (match[2] === '물리') dmgType = 'physical';
+  }
+
+  // 3. 상태이상 및 적 타격 적용
+  if (desc.includes('피해') || desc.includes('타격') || desc.includes('공격') || desc.includes('참격')) {
+      targetEnemies.forEach(e => {
+         dealDamage(unit, e, multi, dmgType); // 타입 전달
+         if (desc.includes('기절')) e.buffs.push({type: 'stun', amount: 0, turns: 1, name: '기절'});
+         if (desc.includes('화상')) e.buffs.push({type: 'burn', amount: 0, turns: 3, name: '화상'});
+         if (desc.includes('중독')) e.buffs.push({type: 'poison', amount: 0, turns: 3, name: '중독'});
+         if (desc.includes('출혈')) e.buffs.push({type: 'bleed', amount: 0, turns: 3, name: '출혈'});
+         if (desc.includes('혼란')) e.buffs.push({type: 'confusion', amount: 0, turns: 1, name: '혼란'});
+         if (desc.includes('매혹')) e.buffs.push({type: 'charm', amount: 0, turns: 1, name: '매혹'});
+         if (desc.includes('방어 감소') || desc.includes('방어력 감소')) e.buffs.push({type: 'def', amount: -0.2, turns: 2, name: '방어감소'});
+         if (desc.includes('속도 감소')) e.buffs.push({type: 'spd', amount: -0.2, turns: 2, name: '속도감소'});
+         if (desc.includes('공격 감소') || desc.includes('공격력 감소')) e.buffs.push({type: 'atk', amount: -0.2, turns: 2, name: '공격감소'});
+      });
+  }
+
+  // 4. 아군 버프 및 회복
+  if (desc.includes('회복') || desc.includes('치유')) {
+      var healMulti = unit.role === '힐러' ? 2.5 : 0.5;
+      targetAllies.forEach(a => {
+         var heal = getUnitStats(unit).atk * healMulti;
+         a.hp = Math.min(a.maxHp, a.hp + heal);
+         addLog(`<span class='text-green-400'>${a.name} 체력 ${Math.floor(heal)} 회복!</span>`);
+         if (desc.includes('재생')) a.buffs.push({type: 'regen', val: 0.1, turns: 2, name: '재생'});
+      });
+  }
+  
+  targetAllies.forEach(a => {
+      if (desc.includes('방어 상승') || desc.includes('방어력 상승') || desc.includes('방어력 20% 상승') || desc.includes('방어력 30% 상승')) {
+         a.buffs.push({type: 'def', amount: 0.25, turns: 3, name: '방어상승'});
+      }
+      if (desc.includes('공격 상승') || desc.includes('공격력 상승') || desc.includes('공격력 15% 증가') || desc.includes('공격력 30% 증가')) {
+         a.buffs.push({type: 'atk', amount: 0.25, turns: 3, name: '공격상승'});
+      }
+      if (desc.includes('속도 상승')) a.buffs.push({type: 'spd', amount: 0.2, turns: 3, name: '속도상승'});
+  });
+
+  // 5. 특수 로직 (도발, 고육지책 등)
+  if (desc.includes('도발')) unit.buffs.push({type: 'taunt', amount: 0, turns: 2, name: '도발'});
+  if (desc.includes('체력 소모') || desc.includes('체력 깎고')) {
+      var cost = Math.floor(unit.hp * 0.15);
+      unit.hp -= cost;
+      addLog(`<span class='text-purple-400'>${unit.name}이(가) 스킬을 위해 체력을 ${cost} 소모!</span>`);
+  }
+  if (desc.includes('희생하여')) {
+      var sacrifice = aliveAllies.find(a => a.id !== unit.id);
+      if (sacrifice) {
+          sacrifice.hp = 0;
+          unit.hp = unit.maxHp;
+          addLog(`<span class='text-red-500 font-bold'>${unit.name}이(가) ${sacrifice.name}을(를) 희생시켰습니다!</span>`);
+      }
+  }
+}
+8
 
 // 텍스트 기반 스마트 파싱 스킬 엔진
 function executeSkill(unit) {
