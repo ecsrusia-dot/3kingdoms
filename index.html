@@ -222,6 +222,73 @@ var REBIRTH_RULES = {
   'SSR': { result: 'UR',  need: 3, prob: 5  }
 };
 
+  // =============== [숙명/라이벌 시스템] ===============
+// 파티에 특정 무장 조합이 있으면 발동되는 인연 효과
+// type: 'bond'(시너지) / 'rivalry'(라이벌 = 시너지+부작용)
+var BOND_DB = [
+  // ===== 시너지형 (BOND) =====
+  {
+    id: 'B001', name: '도원결의', type: 'bond',
+    members: ['H004', 'H005', 'H006'], // 유비, 관우, 장비
+    desc: '아군 전체 공격력 +25%, 방어력 +25%',
+    effects: { allyAtk: 0.25, allyDef: 0.25 }
+  },
+  {
+    id: 'B002', name: '오호대장군', type: 'bond',
+    members: ['H005', 'H007', 'H014', 'H015'], // 관우, 조운, 마초, 황충 (위연 H016은 제외, 4명 모이면 발동)
+    desc: '맹장 직업군 공격력 +40%, 치명타 +15%',
+    effects: { roleAtk: { '맹장': 0.40 }, allyCrit: 15 }
+  },
+  {
+    id: 'B003', name: '와룡봉추', type: 'bond',
+    members: ['H009', 'H033'], // 제갈량, 방통
+    desc: '아군 전체 스킬 발동률 +20%, 마법 피해 +30%',
+    effects: { allyProb: 20, magicAtk: 0.30 }
+  },
+  {
+    id: 'B004', name: '강동의 패자', type: 'bond',
+    members: ['H024', 'H025'], // 손책, 손권
+    desc: '아군 전체 체력 +20%, 속도 +15%',
+    effects: { allyHp: 0.20, allySpd: 0.15 }
+  },
+  {
+    id: 'B005', name: '조조의 두뇌', type: 'bond',
+    members: ['H022', 'H023'], // 곽가, 순욱
+    desc: '모사 직업군 지력 +30%, 디버프 적중률 +20%',
+    effects: { roleAtk: { '모사': 0.30 } }
+  },
+  {
+    id: 'B006', name: '이계의 수호자', type: 'bond',
+    members: ['H001', 'H002', 'H003'], // M, Harje, Elain
+    desc: '차원의 가호 — 아군 전체 모든 스탯 +20%',
+    effects: { allyAtk: 0.20, allyDef: 0.20, allyHp: 0.20, allySpd: 0.20 }
+  },
+
+  // ===== 라이벌형 (RIVALRY) - 시너지 + 부작용 =====
+  {
+    id: 'R001', name: '용호상박', type: 'rivalry',
+    members: ['H009', 'H013'], // 제갈량 + 사마의
+    desc: '🔥 마법 공격력 +100% / ⚠️ 매 턴 20% 확률로 둘 중 한 명 행동 거부',
+    effects: { magicAtk: 1.00 },
+    drawback: { type: 'turnSkip', prob: 20, targets: ['H009', 'H013'] }
+  },
+  {
+    id: 'R002', name: '인중여포', type: 'rivalry',
+    members: ['H008', 'H030', 'H031'], // 여포 + 초선 + 동탁
+    desc: '🔥 여포·동탁 공격력 +80% / ⚠️ 턴 종료 시 서로 체력 5%씩 감소',
+    effects: { specificAtk: { 'H008': 0.80, 'H031': 0.80 } },
+    drawback: { type: 'mutualDamage', percent: 5, targets: ['H008', 'H031'] }
+  },
+  {
+    id: 'R003', name: '숙명의 라이벌', type: 'rivalry',
+    members: ['H013'], // 사마의 단독 (제갈량 없을 때 활성화)
+    excludes: ['H009'],
+    desc: '🔥 사마의 단독 출진 — 지력 +50%, 매 턴 방어력 누적 / ⚠️ 받는 피해 +15%',
+    effects: { specificAtk: { 'H013': 0.50 } },
+    drawback: { type: 'extraDmgTaken', percent: 15, targets: ['H013'] }
+  }
+];
+  
 // 던전 데이터베이스
 var DUNGEON_DB = [
   { id: 'D1', name: '황건의 난',     desc: '쉬움 — 장각의 무리 토벌',  enemies: ['H091', 'H092', 'H092'],     reward: { sky: 200, manual: 50 } },
@@ -1069,6 +1136,105 @@ function executeRebirth() {
 // [8] 전투 시스템
 // =========================================================
 
+// =========================================================
+// [숙명] 활성 인연 체크 + 효과 합산
+// =========================================================
+function getActiveBonds() {
+  var partyIds = state.battle.ally.map(u => u.id);
+  var active = [];
+
+  BOND_DB.forEach(bond => {
+    var allMembersIn = bond.members.every(id => partyIds.includes(id));
+    if (!allMembersIn) return;
+    // excludes 체크 (특정 무장이 있으면 발동 안 됨)
+    if (bond.excludes && bond.excludes.some(id => partyIds.includes(id))) return;
+    active.push(bond);
+  });
+  return active;
+}
+
+// 전투 시작 시 한 번 콜 — 활성 숙명을 로그에 표시
+function announceBonds() {
+  var active = getActiveBonds();
+  active.forEach(b => {
+    var color = b.type === 'rivalry' ? 'text-rose-400' : 'text-amber-300';
+    var icon = b.type === 'rivalry' ? '⚔️' : '🔗';
+    addLog(`<span class='${color} font-bold'>${icon} [숙명 발동] ${b.name}</span>`);
+    addLog(`<span class='text-[9px] text-slate-400'>↳ ${b.desc}</span>`);
+  });
+}
+
+// 한 유닛에게 적용될 숙명 보너스 산출 (배율 형태로 반환)
+function getBondMultipliers(unit) {
+  var mult = { atk: 0, def: 0, hp: 0, spd: 0, prob: 0, crit: 0 };
+  if (unit.side !== 'ally') return mult;
+
+  var active = getActiveBonds();
+  active.forEach(b => {
+    var e = b.effects || {};
+    if (e.allyAtk) mult.atk += e.allyAtk;
+    if (e.allyDef) mult.def += e.allyDef;
+    if (e.allyHp) mult.hp += e.allyHp;
+    if (e.allySpd) mult.spd += e.allySpd;
+    if (e.allyProb) mult.prob += e.allyProb;
+    if (e.allyCrit) mult.crit += e.allyCrit;
+    // 직업별 보너스
+    if (e.roleAtk && e.roleAtk[unit.role]) mult.atk += e.roleAtk[unit.role];
+    // 마법 공격력 (모사/힐러만)
+    if (e.magicAtk && (unit.role === '모사' || unit.role === '힐러')) mult.atk += e.magicAtk;
+    // 특정 무장 지정 보너스
+    if (e.specificAtk && e.specificAtk[unit.id]) mult.atk += e.specificAtk[unit.id];
+  });
+  return mult;
+}
+
+// 매 턴 종료 시 호출 — 라이벌 부작용 처리
+function processBondDrawbacks(activeUnit) {
+  if (activeUnit.side !== 'ally') return;
+  var active = getActiveBonds();
+
+  active.forEach(b => {
+    if (b.type !== 'rivalry' || !b.drawback) return;
+    var d = b.drawback;
+    if (!d.targets || !d.targets.includes(activeUnit.id)) return;
+
+    // 행동 거부
+    if (d.type === 'turnSkip') {
+      if (Math.random() * 100 < d.prob) {
+        addLog(`<span class='text-rose-400'>⚠️ [숙명의 부작용] ${activeUnit.name}이(가) ${b.name}의 영향으로 다음 행동을 거부합니다!</span>`);
+        activeUnit.buffs.push({ type: 'stun', amount: 0, turns: 1, name: '행동거부' });
+      }
+    }
+    // 상호 데미지 (턴 종료 시 멤버끼리 서로 깎음)
+    if (d.type === 'mutualDamage') {
+      d.targets.forEach(tid => {
+        if (tid === activeUnit.id) return;
+        var ally = state.battle.ally.find(a => a.id === tid && a.hp > 0);
+        if (ally) {
+          var dmg = Math.floor(ally.maxHp * d.percent / 100);
+          ally.hp = Math.max(1, ally.hp - dmg);
+          showFloatingDamage(ally, `-${dmg}`, false);
+          addLog(`<span class='text-rose-400'>⚠️ ${ally.name}이(가) ${b.name}으로 ${dmg} 자해!</span>`);
+        }
+      });
+    }
+  });
+}
+
+// 라이벌 받는 피해 증가 (dealDamage에서 호출)
+function getBondDmgTakenMod(target) {
+  if (target.side !== 'ally') return 1.0;
+  var active = getActiveBonds();
+  var mod = 1.0;
+  active.forEach(b => {
+    if (b.type !== 'rivalry' || !b.drawback) return;
+    if (b.drawback.type === 'extraDmgTaken' && b.drawback.targets.includes(target.id)) {
+      mod += b.drawback.percent / 100;
+    }
+  });
+  return mod;
+}
+  
 // 가문 영구 버프 적용 + 모든 스탯 산출
 function getUnitStats(u) {
   var isMagic = (u.role === '모사' || u.role === '힐러');
@@ -1079,12 +1245,21 @@ function getUnitStats(u) {
   var legacyDef = u.side === 'ally' ? legacy.defBonus / 100 : 0;
   var legacySpd = u.side === 'ally' ? legacy.spdBonus / 100 : 0;
 
+  // 숙명(인연) 보너스 합산
+  var bondMult = getBondMultipliers(u);
+  legacyAtk += bondMult.atk;
+  legacyDef += bondMult.def;
+  legacySpd += bondMult.spd;
+  
   var baseAtk = (isMagic ? u.stats.int * 5 : u.stats.str * 5) * (1 + legacyAtk);
   var baseDef = u.stats.con * 2 * (1 + legacyDef);
   var baseMdef = ((u.stats.con * 1) + (u.stats.int * 1.5)) * (1 + legacyDef);
   var baseSpd = u.stats.spd * (1 + legacySpd);
 
   var crr = 10, eva = 5, probB = 0, cdm = 150;
+  // 숙명 보너스: 치명타 / 발동률
+  crr += bondMult.crit;
+  probB += bondMult.prob;
 
   if (u.passiveSkill) {
     var pDesc = u.passiveSkill.desc;
@@ -1155,9 +1330,15 @@ function startDungeon(dungeonId) {
     if (!id) return null;
     var d = HERO_DB.find(h => h.id === id);
     if (!d) return null;
-    var maxHp = Math.floor(d.stats.con * 50 * (1 + hpBonus));
-    return { ...JSON.parse(JSON.stringify(d)), hp: maxHp, maxHp: maxHp, atb: 0, pos: idx, side: 'ally', buffs: [], cd: 0 };
-  }).filter(u => u !== null);
+    // 숙명의 hp 보너스 임시 계산 (멤버 모두 있는지 체크)
+    var partyIds = state.player.party.filter(x => x);
+    var bondHpBonus = 0;
+    BOND_DB.forEach(b => {
+      var allIn = b.members.every(mid => partyIds.includes(mid));
+      var notExcluded = !b.excludes || !b.excludes.some(eid => partyIds.includes(eid));
+      if (allIn && notExcluded && b.effects && b.effects.allyHp) bondHpBonus += b.effects.allyHp;
+    });
+    var maxHp = Math.floor(d.stats.con * 50 * (1 + hpBonus + bondHpBonus));
 
   state.battle.enemy = dungeon.enemies.map((id, idx) => {
     var d = HERO_DB.find(h => h.id === id);
@@ -1168,6 +1349,9 @@ function startDungeon(dungeonId) {
   state.battle.ally.concat(state.battle.enemy).forEach(u => {
     if (u.passiveSkill) addLog(`<span class='text-blue-300 text-[9px]'>[패시브] ${u.name} - ${u.passiveSkill.name} 활성화!</span>`);
   });
+
+  // 숙명 발동 체크 및 안내
+  announceBonds();
 
   renderBattleScreen(container);
   state.battle.isRunning = true;
@@ -1238,6 +1422,8 @@ function battleTick() {
     var activeUnit = allUnits.find(u => u.atb >= 1000);
     if (activeUnit) {
       executeTurn(activeUnit);
+      // 숙명 부작용 (라이벌 자해, 행동거부 등)
+      processBondDrawbacks(activeUnit);
       activeUnit.atb = 0;
       activeUnit.buffs.forEach(b => b.turns--);
       activeUnit.buffs = activeUnit.buffs.filter(b => b.turns > 0);
@@ -1309,7 +1495,9 @@ function dealDamage(attacker, target, multiplier, dmgType) {
   var isCrit = Math.random() * 100 < atkStats.crr;
   if (isCrit) baseDmg *= (atkStats.cdm / 100);
 
-  var finalDmg = Math.max(1, Math.floor(baseDmg * miti * attrInfo.mult));
+  // 숙명 부작용: 라이벌 캐릭터는 받는 피해 증가
+  var bondTakenMod = getBondDmgTakenMod(target);
+  var finalDmg = Math.max(1, Math.floor(baseDmg * miti * attrInfo.mult * bondTakenMod));
   target.hp = Math.max(0, target.hp - finalDmg);
 
   var critStr = isCrit ? "<span class='text-red-500 font-bold'>[치명타!] </span>" : "";
