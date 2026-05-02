@@ -1273,13 +1273,15 @@ function executeTurn(unit) {
 // 천 > 지 > 인 > 천
 function getAttrBonus(attacker, target) {
   var a = attacker.attr, t = target.attr;
-  // 유리 상성: 1.3배
-  if ((a === '천' && t === '지') || (a === '지' && t === '인') || (a === '인' && t === '천')) {
-    return { mult: 1.3, type: 'good' };
+  // 상성: 천 > 인 > 지 > 천 (기획서 기준)
+  // 천(하늘)은 인(사람)에 강함, 인은 지(땅)에 강함, 지는 천에 강함
+  // 유리 상성: 1.5배
+  if ((a === '천' && t === '인') || (a === '인' && t === '지') || (a === '지' && t === '천')) {
+    return { mult: 1.5, type: 'good' };
   }
-  // 불리 상성: 1/3 = 0.33배
-  if ((a === '지' && t === '천') || (a === '인' && t === '지') || (a === '천' && t === '인')) {
-    return { mult: 0.33, type: 'bad' };
+  // 불리 상성: 0.7배 (기존 0.33은 너무 가혹해서 완화)
+  if ((a === '인' && t === '천') || (a === '지' && t === '인') || (a === '천' && t === '지')) {
+    return { mult: 0.7, type: 'bad' };
   }
   return { mult: 1.0, type: 'normal' };
 }
@@ -1299,7 +1301,8 @@ function dealDamage(attacker, target, multiplier, dmgType) {
 
   var baseDmg = atkStats.atk * multiplier;
   var targetDef = (dmgType === 'magic') ? defStats.mdef : defStats.def;
-  var miti = 100 / (100 + targetDef);
+  // 방어 감산 곡선 완화: 200 기준점으로 해서 격차 줄임
+  var miti = 200 / (200 + targetDef);
 
   var attrInfo = getAttrBonus(attacker, target);
 
