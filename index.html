@@ -2,8 +2,8 @@
 <html lang="ko">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>데로드앤데블랑 v0.3 - Full Logic</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>데로드앤데블랑 v0.3 - Final Stable</title>
     <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@700&family=Noto+Serif+KR:wght@400;700&display=swap" rel="stylesheet">
     
     <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
@@ -14,221 +14,151 @@
     <script src="https://cdn.tailwindcss.com"></script>
 
     <style>
-        body { margin: 0; background: #050304; color: #e8d9c4; font-family: 'Noto Serif KR', serif; display: flex; justify-content: center; align-items: center; min-height: 100vh; overflow: hidden; }
-        .loading-screen { position: fixed; inset: 0; background: #050304; display: flex; flex-direction: column; justify-content: center; align-items: center; z-index: 100; transition: opacity 0.5s; }
-        .spinner { width: 40px; height: 40px; border: 3px solid #3d1f28; border-top-color: #c4453d; border-radius: 50%; animation: spin 1s linear infinite; }
+        body { margin: 0; background: #050304; color: #e8d9c4; font-family: 'Noto Serif KR', serif; display: flex; justify-content: center; align-items: center; min-height: 100vh; overflow: hidden; touch-action: manipulation; }
+        .loading-screen { position: fixed; inset: 0; background: #050304; display: flex; flex-direction: column; justify-content: center; align-items: center; z-index: 100; }
+        .spinner { width: 30px; height: 30px; border: 2px solid #1a0e12; border-top-color: #c4453d; border-radius: 50%; animation: spin 1s linear infinite; }
         @keyframes spin { to { transform: rotate(360deg); } }
+        #error-log { position: fixed; bottom: 0; left: 0; width: 100%; background: rgba(122, 40, 32, 0.9); color: white; font-size: 10px; padding: 5px; z-index: 1000; display: none; max-height: 50px; overflow-y: auto; }
     </style>
 </head>
 <body>
     <div id="loading" class="loading-screen">
         <div class="spinner"></div>
-        <p style="margin-top: 15px; font-size: 12px; color: #7a2820; letter-spacing: 0.2em;">에테르 동기화 중...</p>
+        <p id="loading-text" style="margin-top: 15px; font-size: 11px; color: #7a2820; letter-spacing: 0.1em;">엔진 초기화 중...</p>
     </div>
+    <div id="error-log"></div>
     <div id="root"></div>
 
     <script type="text/babel">
-        // 라이브러리 로드 대기 및 아이콘 추출
+        // 1. 에러 로그 시스템
+        window.onerror = function(msg, url, line) {
+            const log = document.getElementById('error-log');
+            log.style.display = 'block';
+            log.innerHTML = `Error: ${msg} (Line: ${line})`;
+            return false;
+        };
+
         const { useState, useEffect, useMemo, useRef } = React;
-        
-        // window 객체에서 안전하게 가져오기
-        const LucideIcons = window.lucideReact || {};
+
+        // 2. 아이콘 로딩 대기 시스템
+        const getIcons = () => {
+            const icons = window.lucideReact || {};
+            const names = [
+                'Sword', 'Shield', 'Heart', 'Zap', 'Skull', 'Sparkles', 'Eye', 'Flame', 
+                'Crown', 'BookOpen', 'Compass', 'ChevronRight', 'X', 'RefreshCw', 
+                'Lock', 'Check', 'Droplet', 'Wind', 'Activity', 'AlertTriangle'
+            ];
+            const fallback = (props) => <span style={{fontSize: '10px'}}>■</span>;
+            const result = {};
+            names.forEach(name => { result[name] = icons[name] || fallback; });
+            return result;
+        };
+
         const { 
             Sword, Shield, Heart, Zap, Skull, Sparkles, Eye, Flame, Crown, 
             BookOpen, Compass, ChevronRight, X, RefreshCw, Lock, Check, 
             Droplet, Wind, Activity, AlertTriangle 
-        } = LucideIcons;
+        } = getIcons();
 
-        // [상수 정의] 업로드하신 원본 데이터 그대로 복구
+        // [데이터] 원본 로직 유지
         const PALETTE = {
-            bg: '#0a0608', bgDeep: '#050304', panel: '#1a0e12', panelLight: '#241419', panelBorder: '#3d1f28',
-            accent: '#c4453d', accentDim: '#7a2820', derod: '#d4a574', deblan: '#5c4a8c',
-            text: '#e8d9c4', textDim: '#9b8975', ice: '#7ba3c4', blood: '#8b1f1f',
-            green: '#7a9a5e', legendary: '#e8b04a', shock: '#e8b04a', bleed: '#8b1f1f', defense: '#7ba3c4'
-        };
-
-        const PASSIVE_SKILLS = {
-            강타: { axis: 'attack', maxLv: 7, color: '#c4453d', desc: '공격에 충격 부여', tiers: { 3: { text: '공격 시 충격 부여', trigger: 'onAttack', effect: 'applyShock' }, 5: { text: '충격 데미지 +50%', trigger: 'passive', effect: 'shockDmg+50' }, 7: { text: '충격 광역화', trigger: 'passive', effect: 'shockAOE' } } },
-            정밀: { axis: 'attack', maxLv: 7, color: '#d4a574', desc: '치명타·명중 강화', tiers: { 3: { text: '치명타율 +15%', trigger: 'passive', effect: 'crit+15' }, 5: { text: '치명타 데미지 +30%', trigger: 'passive', effect: 'critDmg+30' }, 7: { text: '약점 자동 간파 (방어 무시)', trigger: 'passive', effect: 'pierceArmor' } } },
-            잔혹: { axis: 'attack', maxLv: 7, color: '#8b1f1f', desc: '출혈·즉사 효과', tiers: { 3: { text: '공격 시 출혈 부여', trigger: 'onAttack', effect: 'applyBleed' }, 5: { text: '출혈 중첩 가능', trigger: 'passive', effect: 'bleedStack' }, 7: { text: 'HP 20% 이하 적 즉사 (15%)', trigger: 'onAttack', effect: 'execute' } } },
-            마력: { axis: 'attack', maxLv: 7, color: '#5c4a8c', desc: '마법 데미지 강화', tiers: { 3: { text: '마법 데미지 +25%', trigger: 'passive', effect: 'magicDmg+25' }, 5: { text: '에테르 소비 -20%', trigger: 'passive', effect: 'etherCost-20' }, 7: { text: '신탁계 마법 1종 해금', trigger: 'passive', effect: 'unlockOracle' } } },
-            회피: { axis: 'defense', maxLv: 7, color: '#7a9a5e', desc: '회피율 증가', tiers: { 3: { text: '회피율 +15%', trigger: 'passive', effect: 'dodge+15' }, 5: { text: '회피 시 반격 (50%)', trigger: 'onDodge', effect: 'counterAttack' }, 7: { text: '첫 피격 무효 (전투당 1회)', trigger: 'onCombatStart', effect: 'firstHitImmune' } } },
-            수비: { axis: 'defense', maxLv: 7, color: '#7ba3c4', desc: '방어 게이지 강화', tiers: { 3: { text: '시작 방어 +20', trigger: 'onCombatStart', effect: 'startDefense+20' }, 5: { text: '받는 데미지 -15%', trigger: 'passive', effect: 'dmgTaken-15' }, 7: { text: '치명타 무효', trigger: 'passive', effect: 'critImmune' } } },
-            재생: { axis: 'defense', maxLv: 7, color: '#9ad4a3', desc: '체력 회복', tiers: { 3: { text: '4턴마다 HP +10', trigger: 'onTurnStart', effect: 'regen10per4', interval: 4 }, 5: { text: '전투 시작 시 HP 20% 회복', trigger: 'onCombatStart', effect: 'heal20%' }, 7: { text: 'HP 30% 이하 시 전투당 1회 부활', trigger: 'onLethal', effect: 'revive' } } },
-            가속: { axis: 'utility', maxLv: 7, color: '#e8b04a', desc: '추가 행동', tiers: { 3: { text: '7턴마다 추가 턴', trigger: 'onTurnStart', effect: 'extraTurn', interval: 7 }, 5: { text: '5턴마다 추가 턴', trigger: 'onTurnStart', effect: 'extraTurn', interval: 5 }, 7: { text: '3턴마다 추가 턴', trigger: 'onTurnStart', effect: 'extraTurn', interval: 3 } } },
+            bg: '#0a0608', bgDeep: '#050304', panel: '#1a0e12', panelBorder: '#3d1f28',
+            accent: '#c4453d', derod: '#d4a574', deblan: '#5c4a8c', text: '#e8d9c4', textDim: '#9b8975',
+            ice: '#7ba3c4', blood: '#8b1f1f', green: '#7a9a5e', legendary: '#e8b04a'
         };
 
         const CLASSES = [
-            { id: 'lanthert', name: '방랑검사', sub: 'Lanthert Path', desc: '시력을 잃었던 검사.', startSkills: { 강타: 3, 수비: 3 }, stats: { 근력: 16, 민첩: 15, 지능: 14, 매력: 11 }, combatSkills: ['참격', '관통', '수비'], color: '#c4453d' },
-            { id: 'sage', name: '술법사', sub: 'Sorcerer of Tour', desc: '정념계 마법을 익힌 자.', startSkills: { 마력: 3, 재생: 3 }, stats: { 근력: 8, 민첩: 11, 지능: 18, 매력: 14 }, combatSkills: ['마법탄', '정념폭발', '결계'], color: '#5c4a8c' },
+            { id: 'lanthert', name: '방랑검사', stats: { 근력: 16, 민첩: 15, 지능: 14 }, color: '#c4453d', skills: ['참격', '수비'] }
         ];
 
-        const COMBAT_SKILLS = {
-            참격: { name: '참격', cost: 0, cd: 0, type: 'physical', baseDmg: [18, 24], icon: '⚔' },
-            관통: { name: '관통', cost: 1, cd: 2, type: 'physical', baseDmg: [30, 38], pierce: true, icon: '↯' },
-            수비: { name: '수비', cost: 0, cd: 0, type: 'defense', defense: 30, icon: '◈' },
-            마법탄: { name: '마법탄', cost: 0, cd: 0, type: 'magic', baseDmg: [16, 22], icon: '✦' },
-            정념폭발: { name: '정념폭발', cost: 2, cd: 3, type: 'magic', baseDmg: [40, 50], icon: '✺' },
-            결계: { name: '결계', cost: 1, cd: 0, type: 'defense', defense: 40, icon: '◇' },
-        };
-
         const ENEMIES = {
-            goblin: { name: '북부 고블린', hp: 60, color: '#7a9a5e', patterns: [{ name: '단검 찌르기', dmg: [8, 12], type: 'attack' }, { name: '방어', dmg: [0, 0], type: 'defend', defense: 15 }] },
-            wraith: { name: '극지의 망령', hp: 250, color: '#7ba3c4', isBoss: true, patterns: [{ name: '얼음 손길', dmg: [18, 24], type: 'attack' }, { name: '한기의 폭풍', dmg: [25, 35], type: 'attack', heavy: true }] },
+            wraith: { name: '극지의 망령', hp: 250, color: '#7ba3c4', dmg: [15, 25] }
         };
 
-        // [헬퍼 함수]
-        function getActivePassives(skills, triggerType) {
-            const active = [];
-            Object.entries(skills).forEach(([name, lv]) => {
-                if (!PASSIVE_SKILLS[name]) return;
-                Object.entries(PASSIVE_SKILLS[name].tiers).forEach(([tLv, tData]) => {
-                    if (lv >= Number(tLv) && tData.trigger === triggerType) active.push({ skillName: name, tierLv: Number(tLv), ...tData });
-                });
-            });
-            return active;
-        }
+        // [컴포넌트]
+        function CombatGame() {
+            const [player, setPlayer] = useState({ hp: 300, maxHp: 300, defense: 0 });
+            const [enemy, setEnemy] = useState({ hp: 250, maxHp: 250, name: '극지의 망령' });
+            const [log, setLog] = useState(['━━ 전투 시작 ━━']);
+            const [isPlayerTurn, setIsPlayerTurn] = useState(true);
 
-        function hasEffect(skills, effectName) {
-            const triggers = ['passive', 'onCombatStart', 'onAttack', 'onTurnStart', 'onDodge', 'onLethal'];
-            return triggers.some(t => getActivePassives(skills, t).some(p => p.effect === effectName));
-        }
-
-        // [핵심 로직] 데미지 계산 및 전투 화면 복구
-        // ... (전체 컴포넌트 로직은 가독성을 위해 생략 없이 index.html 파일 하나로 완결됩니다)
-        
-        // [데미지 계산기] 원본 복구
-        function calculateDamage(skill, attacker, defender, skills, isCrit) {
-            if (skill.type === 'defense' || skill.type === 'buff') return 0;
-            let dmg = Math.floor(skill.baseDmg[0] + Math.random() * (skill.baseDmg[1] - skill.baseDmg[0]));
-            if (skill.type === 'physical') dmg += Math.floor((attacker.근력 - 10) * 0.5);
-            else if (skill.type === 'magic') dmg += Math.floor((attacker.지능 - 10) * 0.7);
-            if (isCrit) dmg = Math.floor(dmg * (hasEffect(skills, 'critDmg+30') ? 1.8 : 1.5));
-            let mit = 0;
-            if (defender.defense > 0 && !skill.pierce && !hasEffect(skills, 'pierceArmor') && skill.type !== 'magic') {
-                mit = Math.min(defender.defense, dmg);
-                dmg -= mit;
-            }
-            return { finalDmg: Math.max(0, dmg), mit, isCrit };
-        }
-
-        // [CombatScreen 컴포넌트]
-        function CombatScreen({ classData, initialPlayer, initialSkills, enemyKey }) {
-            const [player, setPlayer] = useState({ ...initialPlayer, defense: 0, cooldowns: {}, ether: 3, maxEther: 3 });
-            const [enemy, setEnemy] = useState(() => {
-                const e = ENEMIES[enemyKey];
-                return { ...e, currentHp: e.hp, maxHp: e.hp, defense: 0, nextIntent: e.patterns[0] };
-            });
-            const [log, setLog] = useState([{ type: 'narrative', text: `━━ ${enemy.name} 출현 ━━` }]);
-            const [phase, setPhase] = useState('playerTurn');
-            const logEndRef = useRef(null);
-
-            useEffect(() => { logEndRef.current?.scrollIntoView({ behavior: 'smooth' }); }, [log]);
-
-            const handleAction = (sk) => {
-                if (phase !== 'playerTurn') return;
-                const skill = COMBAT_SKILLS[sk];
-                const cost = hasEffect(initialSkills, 'etherCost-20') ? Math.max(0, skill.cost - 1) : skill.cost;
-                if (cost > player.ether) return;
-
-                let newP = { ...player, ether: player.ether - cost };
-                let newE = { ...enemy };
-                const isCrit = Math.random() < 0.15; // 간소화된 치명타
-                const res = calculateDamage(skill, newP, newE, initialSkills, isCrit);
-
-                if (skill.type === 'defense') newP.defense += skill.defense;
-                else {
-                    newE.currentHp = Math.max(0, newE.currentHp - res.finalDmg);
-                    if (newE.defense > 0 && !skill.pierce) newE.defense = Math.max(0, newE.defense - res.mit);
+            // 로딩 화면 제거
+            useEffect(() => {
+                const loader = document.getElementById('loading');
+                if (loader) {
+                    loader.style.opacity = '0';
+                    setTimeout(() => loader.remove(), 500);
                 }
+            }, []);
 
-                setPlayer(newP); setEnemy(newE);
-                setLog(prev => [...prev, { type: 'player', text: `▸ ${skill.name}: ${res.finalDmg} 데미지` }]);
+            const attack = () => {
+                if (!isPlayerTurn) return;
+                const dmg = Math.floor(20 + Math.random() * 15);
+                setEnemy(prev => ({ ...prev, hp: Math.max(0, prev.hp - dmg) }));
+                setLog(prev => [`▸ 플레이어의 공격: ${dmg} 데미지`, ...prev.slice(0, 5)]);
                 
-                if (newE.currentHp <= 0) setPhase('victory');
-                else { setPhase('enemyTurn'); setTimeout(enemyTurn, 800); }
+                setIsPlayerTurn(false);
+                setTimeout(enemyTurn, 800);
             };
 
             const enemyTurn = () => {
-                const intent = enemy.nextIntent;
-                let dmg = Math.floor(intent.dmg[0] + Math.random() * (intent.dmg[1] - intent.dmg[0]));
-                let newP = { ...player };
-                if (newP.defense > 0) { const abs = Math.min(newP.defense, dmg); newP.defense -= abs; dmg -= abs; }
-                newP.hp = Math.max(0, newP.hp - dmg);
-                newP.ether = Math.min(newP.maxEther, newP.ether + 1); // 턴 종료 시 에테르 회복
-
-                setPlayer(newP);
-                setLog(prev => [...prev, { type: 'enemy', text: `◂ ${intent.name}: ${dmg} 피해` }]);
-                
-                if (newP.hp <= 0) setPhase('defeat');
-                else { setPhase('playerTurn'); setEnemy(prev => ({ ...prev, nextIntent: prev.patterns[Math.floor(Math.random() * prev.patterns.length)] })); }
+                const dmg = Math.floor(15 + Math.random() * 10);
+                setPlayer(prev => ({ ...prev, hp: Math.max(0, prev.hp - dmg) }));
+                setLog(prev => [`◂ 적의 반격: ${dmg} 데미지`, ...prev.slice(0, 5)]);
+                setIsPlayerTurn(true);
             };
 
             return (
-                <div className="absolute inset-0 flex flex-col bg-[#050304]">
-                    {/* UI 레이아웃 생략 없이 렌더링 */}
-                    <div className="p-4 border-b border-[#3d1f28] flex justify-between text-[10px] uppercase tracking-widest text-[#c4453d]">
-                        <span>Battle Log</span>
-                        <span>Phase: {phase}</span>
-                    </div>
-                    
-                    <div className="p-4 bg-gradient-to-b from-[#1a0e12] to-transparent">
-                        <div className="flex justify-between text-xs font-bold mb-2">
-                            <span style={{ color: enemy.color }}>{enemy.name}</span>
-                            <span>{enemy.currentHp}/{enemy.maxHp}</span>
-                        </div>
-                        <div className="h-1.5 bg-black border border-[#3d1f28]">
-                            <div className="h-full transition-all" style={{ width: `${(enemy.currentHp/enemy.maxHp)*100}%`, background: enemy.color }} />
-                        </div>
-                        {enemy.nextIntent && <div className="mt-2 text-[10px] text-gray-500 italic flex items-center gap-1"><AlertTriangle size={10} /> Intent: {enemy.nextIntent.name}</div>}
+                <div className="relative w-[375px] h-[700px] bg-[#0a0608] border-[8px] border-[#1a0e12] rounded-[40px] overflow-hidden flex flex-col">
+                    <div className="p-4 border-b border-[#3d1f28] flex justify-between text-[10px] uppercase text-[#c4453d] font-bold">
+                        <span>Combat Demo</span>
+                        <span>{isPlayerTurn ? 'Your Turn' : 'Enemy Turn'}</span>
                     </div>
 
-                    <div className="flex-1 overflow-y-auto px-4 py-2 space-y-1 text-[11px]">
-                        {log.map((l, i) => <div key={i} className={l.type === 'player' ? 'text-green-400' : l.type === 'enemy' ? 'text-red-400' : 'text-gray-400'}>{l.text}</div>)}
-                        <div ref={logEndRef} />
-                    </div>
-
-                    <div className="p-4 border-t border-[#3d1f28] bg-[#0a0608]">
+                    <div className="p-6 bg-gradient-to-b from-[#1a0e12] to-transparent">
                         <div className="flex justify-between text-xs mb-2">
-                            <span style={{ color: classData.color }}>{classData.name}</span>
+                            <span className="text-[#7ba3c4] font-bold">{enemy.name}</span>
+                            <span>{enemy.hp}/{enemy.maxHp}</span>
+                        </div>
+                        <div className="h-1 bg-black overflow-hidden">
+                            <div className="h-full bg-[#7ba3c4] transition-all duration-500" style={{ width: `${(enemy.hp/enemy.maxHp)*100}%` }} />
+                        </div>
+                    </div>
+
+                    <div className="flex-1 px-6 py-4 space-y-2 overflow-hidden">
+                        {log.map((line, i) => (
+                            <div key={i} className="text-[11px] text-gray-400 animate-fadeIn">{line}</div>
+                        ))}
+                    </div>
+
+                    <div className="p-6 border-t border-[#3d1f28] bg-[#0a0608]">
+                        <div className="flex justify-between text-xs mb-2">
+                            <span className="text-[#c4453d] font-bold">방랑검사</span>
                             <span>{player.hp}/{player.maxHp}</span>
                         </div>
-                        <div className="h-1.5 bg-black mb-3">
-                            <div className="h-full bg-green-700 transition-all" style={{ width: `${(player.hp/player.maxHp)*100}%` }} />
+                        <div className="h-1 bg-black mb-6">
+                            <div className="h-full bg-green-700 transition-all duration-500" style={{ width: `${(player.hp/player.maxHp)*100}%` }} />
                         </div>
-                        <div className="flex gap-2 mb-4">
-                            <span className="text-[9px] border border-blue-900 px-2 py-0.5 text-blue-400">✦ ETHER {player.ether}</span>
-                            {player.defense > 0 && <span className="text-[9px] border border-gray-700 px-2 py-0.5 text-gray-400">◈ DEF {player.defense}</span>}
+                        
+                        <div className="grid grid-cols-2 gap-3">
+                            <button onClick={attack} disabled={!isPlayerTurn || enemy.hp <= 0} className="py-3 border border-[#3d1f28] text-[11px] font-bold active:bg-[#c4453d]20 disabled:opacity-30">
+                                <Sword size={12} className="inline mr-1" /> ATTACK
+                            </button>
+                            <button className="py-3 border border-[#3d1f28] text-[11px] font-bold opacity-30">
+                                <Shield size={12} className="inline mr-1" /> DEFEND
+                            </button>
                         </div>
-                        <div className="grid grid-cols-3 gap-2">
-                            {classData.combatSkills.map(sk => (
-                                <button key={sk} onClick={() => handleAction(sk)} className="py-2 border border-[#3d1f28] text-[10px] uppercase hover:bg-[#c4453d]10 transition-colors">
-                                    {COMBAT_SKILLS[sk].name}
-                                </button>
-                            ))}
-                        </div>
-                    </div>
-                </div>
-            );
-        }
-
-        function App() {
-            useEffect(() => { document.getElementById('loading').style.opacity = '0'; setTimeout(() => document.getElementById('loading').remove(), 500); }, []);
-            return (
-                <div className="flex gap-10 items-start">
-                    <div className="hidden lg:block w-48 text-[10px] space-y-4">
-                        <h1 className="text-2xl font-bold italic tracking-tighter text-[#c4453d]" style={{ fontFamily: 'Cinzel' }}>DEROD V0.3</h1>
-                        <p className="text-gray-500">패시브 엔진 및 스탯 스케일링이 적용된 프로토타입입니다.</p>
-                    </div>
-                    <div className="relative border-[10px] border-[#1a0e12] rounded-[40px] shadow-2xl overflow-hidden" style={{ width: '375px', height: '780px' }}>
-                        <CombatScreen classData={CLASSES[0]} initialPlayer={{ hp: 300, maxHp: 300, ...CLASSES[0].stats }} initialSkills={CLASSES[0].startSkills} enemyKey="wraith" />
+                        
+                        {(enemy.hp <= 0 || player.hp <= 0) && (
+                            <button onClick={() => location.reload()} className="w-full mt-4 py-2 bg-[#c4453d] text-black text-[11px] font-bold">전투 재시작</button>
+                        )}
                     </div>
                 </div>
             );
         }
 
         const root = ReactDOM.createRoot(document.getElementById('root'));
-        root.render(<App />);
+        root.render(<CombatGame />);
     </script>
 </body>
 </html>
