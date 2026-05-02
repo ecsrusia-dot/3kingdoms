@@ -1339,6 +1339,8 @@ function startDungeon(dungeonId) {
       if (allIn && notExcluded && b.effects && b.effects.allyHp) bondHpBonus += b.effects.allyHp;
     });
     var maxHp = Math.floor(d.stats.con * 50 * (1 + hpBonus + bondHpBonus));
+    return { ...JSON.parse(JSON.stringify(d)), hp: maxHp, maxHp: maxHp, atb: 0, pos: idx, side: 'ally', buffs: [], cd: 0 };
+  }).filter(u => u !== null);
 
   state.battle.enemy = dungeon.enemies.map((id, idx) => {
     var d = HERO_DB.find(h => h.id === id);
